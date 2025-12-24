@@ -8,7 +8,7 @@ Add codec-eval to your dev-dependencies:
 
 ```toml
 [dev-dependencies]
-codec-eval = { git = "https://github.com/imazen/codec-comparison" }
+codec-eval = { git = "https://github.com/imazen/codec-eval" }
 ```
 
 ## Wiring Up Your Codec

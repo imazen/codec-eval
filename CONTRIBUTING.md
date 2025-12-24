@@ -7,8 +7,8 @@ This project is designed to be **community-driven**. Codec developers (mozjpeg, 
 ### 1. Fork and Experiment
 
 ```bash
-git clone https://github.com/imazen/codec-comparison
-cd codec-comparison
+git clone https://github.com/imazen/codec-eval
+cd codec-eval
 cargo test
 ```
 

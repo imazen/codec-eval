@@ -14,10 +14,10 @@ A practical guide to comparing image codecs fairly, with metrics accuracy data, 
 
 ```bash
 # Quick start
-cargo add codec-eval --git https://github.com/imazen/codec-comparison
+cargo add codec-eval --git https://github.com/imazen/codec-eval
 
 # Or use the CLI
-cargo install --git https://github.com/imazen/codec-comparison codec-eval-cli
+cargo install --git https://github.com/imazen/codec-eval codec-eval-cli
 ```
 
 ### The codec-eval Library
