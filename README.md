@@ -2,6 +2,56 @@
 
 A practical guide to comparing image codecs fairly, with metrics accuracy data, viewing condition considerations, and scientific methodology.
 
+## For Codec Developers
+
+**Integrating your codec?** See **[INTEGRATION.md](INTEGRATION.md)** for:
+- Wiring up encode/decode callbacks
+- MozJPEG, Jpegli, AVIF examples
+- CI quality regression testing
+- Interpreting DSSIM thresholds
+
+**Want to improve this tool?** See **[CONTRIBUTING.md](CONTRIBUTING.md)**. We actively want input from codec developers—you know your domain better than we do.
+
+```bash
+# Quick start
+cargo add codec-eval --git https://github.com/imazen/codec-comparison
+
+# Or use the CLI
+cargo install --git https://github.com/imazen/codec-comparison codec-eval-cli
+```
+
+### The codec-eval Library
+
+**API-first design**: You provide encode/decode callbacks, the library handles everything else.
+
+```rust
+use codec_eval::{EvalSession, EvalConfig, ViewingCondition};
+
+let config = EvalConfig::builder()
+    .report_dir("./reports")
+    .viewing(ViewingCondition::desktop())
+    .quality_levels(vec![60.0, 80.0, 95.0])
+    .build();
+
+let mut session = EvalSession::new(config);
+
+session.add_codec("my-codec", "1.0", Box::new(|image, request| {
+    my_codec::encode(image, request.quality)
+}));
+
+let report = session.evaluate_corpus("./test_images")?;
+```
+
+**Features:**
+- DSSIM and PSNR metrics (SSIMULACRA2 planned)
+- Viewing condition modeling (desktop, mobile, retina)
+- Corpus management with sparse checkout for large repos
+- CSV import for third-party benchmark results
+- Pareto front analysis and BD-Rate calculation
+- JSON/CSV report generation
+
+---
+
 ## Quick Reference
 
 | Metric | Correlation with Human Perception | Best For |
@@ -462,10 +512,14 @@ ffmpeg -i original.mp4 -i compressed.mp4 -lavfi libvmaf -f null -
 
 ## Contributing
 
-To suggest improvements, open an issue with:
-- Metric accuracy data with source
-- Viewing condition research
-- Tool recommendations
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for the full guide.
+
+**We especially want contributions from:**
+- **Codec developers** (mozjpeg, jpegli, libavif, webp, etc.) — integration examples, quality scale docs, edge cases
+- **Metrics researchers** — new metrics, calibration data, perception thresholds
+- **Anyone** — docs, tests, bug reports, benchmark results
+
+This project is designed to be community-driven. Fork it, experiment, share what you learn.
 
 ---
 
