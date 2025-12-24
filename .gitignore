@@ -21,3 +21,4 @@ target
 #.idea/
 codec-corpus/
 benchmarks/
+external/
