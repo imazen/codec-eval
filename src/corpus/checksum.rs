@@ -35,6 +35,7 @@ pub fn compute_checksum(path: &Path) -> Result<String> {
 
 /// Compute a checksum for in-memory data.
 #[must_use]
+#[allow(dead_code)] // Used in tests, may be useful for API consumers
 pub fn compute_checksum_bytes(data: &[u8]) -> String {
     let mut hash: u64 = 0xcbf29ce484222325;
     const FNV_PRIME: u64 = 0x100000001b3;

@@ -6,7 +6,7 @@
 pub mod chart;
 mod pareto;
 
-pub use chart::{generate_svg, ChartConfig, ChartPoint, ChartSeries};
+pub use chart::{ChartConfig, ChartPoint, ChartSeries, generate_svg};
 pub use pareto::{ParetoFront, RDPoint};
 
 use serde::{Deserialize, Serialize};

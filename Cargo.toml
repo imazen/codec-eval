@@ -54,5 +54,37 @@ tempfile.workspace = true
 unsafe_code = "warn"
 
 [lints.clippy]
-all = "warn"
-pedantic = "warn"
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+# Allow common false positives from pedantic
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+items_after_statements = "allow"
+unreadable_literal = "allow"
+module_name_repetitions = "allow"
+doc_markdown = "allow"
+# Allow cast issues in stats code
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_lossless = "allow"
+# Allow these style choices
+if_not_else = "allow"
+redundant_closure_for_method_calls = "allow"
+option_if_let_else = "allow"
+map_unwrap_or = "allow"
+trivially_copy_pass_by_ref = "allow"
+match_same_arms = "allow"
+needless_raw_string_hashes = "allow"
+unused_self = "allow"
+uninlined_format_args = "allow"
+ref_option = "allow"
+unnecessary_map_or = "allow"
+collapsible_if = "allow"
+needless_pass_by_value = "allow"
+too_many_lines = "allow"
+struct_excessive_bools = "allow"
+cloned_instead_of_copied = "allow"
+stable_sort_primitive = "allow"
+manual_midpoint = "allow"

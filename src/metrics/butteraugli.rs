@@ -10,7 +10,7 @@
 //! - < 5.0: Noticeable difference
 //! - >= 5.0: Degraded
 
-use butteraugli_oxide::{compute_butteraugli, ButteraugliParams};
+use butteraugli_oxide::{ButteraugliParams, compute_butteraugli};
 
 use crate::error::{Error, Result};
 
@@ -128,7 +128,10 @@ mod tests {
         let data: Vec<u8> = (0..100 * 100 * 3).map(|i| (i % 256) as u8).collect();
         let score = calculate_butteraugli(&data, &data, 100, 100).unwrap();
         // Identical images should have score close to 0
-        assert!(score < 0.01, "Identical images should have score ~0, got {score}");
+        assert!(
+            score < 0.01,
+            "Identical images should have score ~0, got {score}"
+        );
     }
 
     #[test]
@@ -137,7 +140,10 @@ mod tests {
         let test_data: Vec<u8> = vec![200u8; 100 * 100 * 3];
         let score = calculate_butteraugli(&ref_data, &test_data, 100, 100).unwrap();
         // Very different images should have high score
-        assert!(score > 1.0, "Very different images should have high score, got {score}");
+        assert!(
+            score > 1.0,
+            "Very different images should have high score, got {score}"
+        );
     }
 
     #[test]
@@ -152,6 +158,9 @@ mod tests {
     fn test_custom_intensity() {
         let data: Vec<u8> = (0..100 * 100 * 3).map(|i| (i % 256) as u8).collect();
         let score = calculate_butteraugli_with_intensity(&data, &data, 100, 100, 250.0).unwrap();
-        assert!(score < 0.01, "Identical images should have score ~0 at any intensity");
+        assert!(
+            score < 0.01,
+            "Identical images should have score ~0 at any intensity"
+        );
     }
 }

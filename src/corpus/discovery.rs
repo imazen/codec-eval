@@ -247,8 +247,6 @@ fn infer_categories(corpus: &mut Corpus) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_png_dimensions() {
         // Minimal valid PNG header with 100x50 dimensions

@@ -12,7 +12,7 @@
 //! - <= 50: Degraded
 
 use ssimulacra2::{
-    compute_frame_ssimulacra2, ColorPrimaries, Rgb as Ssim2Rgb, TransferCharacteristic,
+    ColorPrimaries, Rgb as Ssim2Rgb, TransferCharacteristic, compute_frame_ssimulacra2,
 };
 
 use crate::error::{Error, Result};
@@ -120,7 +120,10 @@ mod tests {
         let data: Vec<u8> = (0..100 * 100 * 3).map(|i| (i % 256) as u8).collect();
         let score = calculate_ssimulacra2(&data, &data, 100, 100).unwrap();
         // Identical images should have score close to 100
-        assert!(score > 99.0, "Identical images should have score ~100, got {score}");
+        assert!(
+            score > 99.0,
+            "Identical images should have score ~100, got {score}"
+        );
     }
 
     #[test]
@@ -129,7 +132,10 @@ mod tests {
         let test_data: Vec<u8> = vec![200u8; 100 * 100 * 3];
         let score = calculate_ssimulacra2(&ref_data, &test_data, 100, 100).unwrap();
         // Very different images should have low score
-        assert!(score < 80.0, "Very different images should have low score, got {score}");
+        assert!(
+            score < 80.0,
+            "Very different images should have low score, got {score}"
+        );
     }
 
     #[test]

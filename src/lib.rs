@@ -54,6 +54,6 @@ pub use eval::{
 pub use import::{CsvImporter, CsvSchema, ExternalResult};
 pub use metrics::{MetricConfig, MetricResult, PerceptionLevel};
 pub use stats::{
-    generate_svg, ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary,
+    ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg,
 };
 pub use viewing::ViewingCondition;

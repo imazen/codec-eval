@@ -132,8 +132,14 @@ pub fn generate_svg(series: &[ChartSeries], config: &ChartConfig) -> String {
         return String::new();
     }
 
-    let all_x: Vec<f64> = non_empty.iter().flat_map(|s| s.points.iter().map(|p| p.x)).collect();
-    let all_y: Vec<f64> = non_empty.iter().flat_map(|s| s.points.iter().map(|p| p.y)).collect();
+    let all_x: Vec<f64> = non_empty
+        .iter()
+        .flat_map(|s| s.points.iter().map(|p| p.x))
+        .collect();
+    let all_y: Vec<f64> = non_empty
+        .iter()
+        .flat_map(|s| s.points.iter().map(|p| p.y))
+        .collect();
 
     let (min_x, max_x) = bounds_with_padding(&all_x, 0.05);
     let (min_y, max_y) = bounds_with_padding(&all_y, 0.05);
@@ -155,8 +161,7 @@ pub fn generate_svg(series: &[ChartSeries], config: &ChartConfig) -> String {
         if config.lower_is_better {
             f64::from(margin_top) + (v - min_y) / (max_y - min_y) * f64::from(plot_height)
         } else {
-            f64::from(margin_top)
-                + (1.0 - (v - min_y) / (max_y - min_y)) * f64::from(plot_height)
+            f64::from(margin_top) + (1.0 - (v - min_y) / (max_y - min_y)) * f64::from(plot_height)
         }
     };
 
@@ -251,7 +256,10 @@ pub fn generate_svg(series: &[ChartSeries], config: &ChartConfig) -> String {
     let _ = writeln!(
         svg,
         r#"<line x1="{}" y1="{}" x2="{}" y2="{}" class="axis"/>"#,
-        margin_left, margin_top, margin_left, height - margin_bottom
+        margin_left,
+        margin_top,
+        margin_left,
+        height - margin_bottom
     );
 
     // Tick labels
