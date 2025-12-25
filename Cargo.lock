@@ -109,9 +109,9 @@ checksum = "5dd9dc738b7a8311c7ade152424974d8115f2cdad61e8dab8dac9f2362298510"
 
 [[package]]
 name = "butteraugli-oxide"
-version = "0.1.0"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ead7686a91a8e1c01ccc3f716643995b0b8a6e671c677db761e387da66f28e97"
+checksum = "7a7c15bce302ee11cd5b2674ee6e061dedd905afd3ea870f1da90082849a6eaf"
 dependencies = [
  "wide",
 ]
