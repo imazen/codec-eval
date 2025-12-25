@@ -4,21 +4,31 @@
 //! and test images. Supported metrics:
 //!
 //! - **DSSIM**: Structural dissimilarity metric (lower is better, 0 = identical)
-//! - **PSNR**: Peak Signal-to-Noise Ratio (higher is better)
+//! - **SSIMULACRA2**: Perceptual similarity metric (higher is better, 100 = identical)
+//! - **Butteraugli**: Perceptual difference metric (lower is better, <1.0 = imperceptible)
+//! - **PSNR**: Peak Signal-to-Noise Ratio (higher is better) - NOT RECOMMENDED
+//!
+//! ## Recommended Metrics
+//!
+//! **Prefer SSIMULACRA2 or Butteraugli over PSNR.** PSNR does not correlate well
+//! with human perception. SSIMULACRA2 and Butteraugli are designed to match
+//! human visual perception of image quality.
 //!
 //! ## Perception Thresholds
 //!
 //! Based on empirical data from imageflow:
 //!
-//! | Level | DSSIM | Description |
-//! |-------|-------|-------------|
-//! | Imperceptible | < 0.0003 | Visually identical |
-//! | Marginal | < 0.0007 | Only A/B comparison reveals |
-//! | Subtle | < 0.0015 | Barely noticeable |
-//! | Noticeable | < 0.003 | Visible on inspection |
-//! | Degraded | >= 0.003 | Clearly visible artifacts |
+//! | Level | DSSIM | SSIMULACRA2 | Butteraugli | Description |
+//! |-------|-------|-------------|-------------|-------------|
+//! | Imperceptible | < 0.0003 | > 90 | < 1.0 | Visually identical |
+//! | Marginal | < 0.0007 | > 80 | < 2.0 | Only A/B comparison reveals |
+//! | Subtle | < 0.0015 | > 70 | < 3.0 | Barely noticeable |
+//! | Noticeable | < 0.003 | > 50 | < 5.0 | Visible on inspection |
+//! | Degraded | >= 0.003 | <= 50 | >= 5.0 | Clearly visible artifacts |
 
+pub mod butteraugli;
 pub mod dssim;
+pub mod ssimulacra2;
 
 use serde::{Deserialize, Serialize};
 
@@ -27,7 +37,11 @@ use serde::{Deserialize, Serialize};
 pub struct MetricConfig {
     /// Calculate DSSIM (structural dissimilarity).
     pub dssim: bool,
-    /// Calculate PSNR (peak signal-to-noise ratio).
+    /// Calculate SSIMULACRA2 (perceptual similarity, higher is better).
+    pub ssimulacra2: bool,
+    /// Calculate Butteraugli (perceptual difference, lower is better).
+    pub butteraugli: bool,
+    /// Calculate PSNR (peak signal-to-noise ratio). NOT RECOMMENDED.
     pub psnr: bool,
 }
 
@@ -37,24 +51,41 @@ impl MetricConfig {
     pub fn all() -> Self {
         Self {
             dssim: true,
+            ssimulacra2: true,
+            butteraugli: true,
             psnr: true,
         }
     }
 
-    /// Fast metric set (PSNR only).
+    /// Fast metric set (PSNR only). NOT RECOMMENDED for quality comparison.
     #[must_use]
     pub fn fast() -> Self {
         Self {
             dssim: false,
+            ssimulacra2: false,
+            butteraugli: false,
             psnr: true,
         }
     }
 
-    /// Perceptual metrics only (DSSIM).
+    /// Perceptual metrics only (DSSIM, SSIMULACRA2, Butteraugli). RECOMMENDED.
     #[must_use]
     pub fn perceptual() -> Self {
         Self {
             dssim: true,
+            ssimulacra2: true,
+            butteraugli: true,
+            psnr: false,
+        }
+    }
+
+    /// SSIMULACRA2 only - good balance of speed and accuracy.
+    #[must_use]
+    pub fn ssimulacra2_only() -> Self {
+        Self {
+            dssim: false,
+            ssimulacra2: true,
+            butteraugli: false,
             psnr: false,
         }
     }
@@ -65,7 +96,11 @@ impl MetricConfig {
 pub struct MetricResult {
     /// DSSIM value (lower is better, 0 = identical).
     pub dssim: Option<f64>,
-    /// PSNR value in dB (higher is better).
+    /// SSIMULACRA2 score (higher is better, 100 = identical).
+    pub ssimulacra2: Option<f64>,
+    /// Butteraugli score (lower is better, <1.0 = imperceptible).
+    pub butteraugli: Option<f64>,
+    /// PSNR value in dB (higher is better). NOT RECOMMENDED.
     pub psnr: Option<f64>,
 }
 
@@ -74,6 +109,18 @@ impl MetricResult {
     #[must_use]
     pub fn perception_level(&self) -> Option<PerceptionLevel> {
         self.dssim.map(PerceptionLevel::from_dssim)
+    }
+
+    /// Get the perception level based on SSIMULACRA2 value.
+    #[must_use]
+    pub fn perception_level_ssimulacra2(&self) -> Option<PerceptionLevel> {
+        self.ssimulacra2.map(PerceptionLevel::from_ssimulacra2)
+    }
+
+    /// Get the perception level based on Butteraugli value.
+    #[must_use]
+    pub fn perception_level_butteraugli(&self) -> Option<PerceptionLevel> {
+        self.butteraugli.map(PerceptionLevel::from_butteraugli)
     }
 }
 
@@ -109,6 +156,40 @@ impl PerceptionLevel {
         }
     }
 
+    /// Determine perception level from SSIMULACRA2 value.
+    /// SSIMULACRA2 is higher-is-better (100 = identical).
+    #[must_use]
+    pub fn from_ssimulacra2(score: f64) -> Self {
+        if score > 90.0 {
+            Self::Imperceptible
+        } else if score > 80.0 {
+            Self::Marginal
+        } else if score > 70.0 {
+            Self::Subtle
+        } else if score > 50.0 {
+            Self::Noticeable
+        } else {
+            Self::Degraded
+        }
+    }
+
+    /// Determine perception level from Butteraugli value.
+    /// Butteraugli is lower-is-better (<1.0 = imperceptible).
+    #[must_use]
+    pub fn from_butteraugli(score: f64) -> Self {
+        if score < 1.0 {
+            Self::Imperceptible
+        } else if score < 2.0 {
+            Self::Marginal
+        } else if score < 3.0 {
+            Self::Subtle
+        } else if score < 5.0 {
+            Self::Noticeable
+        } else {
+            Self::Degraded
+        }
+    }
+
     /// Get the maximum DSSIM value for this perception level.
     #[must_use]
     pub fn max_dssim(self) -> f64 {
@@ -117,6 +198,30 @@ impl PerceptionLevel {
             Self::Marginal => 0.0007,
             Self::Subtle => 0.0015,
             Self::Noticeable => 0.003,
+            Self::Degraded => f64::INFINITY,
+        }
+    }
+
+    /// Get the minimum SSIMULACRA2 value for this perception level.
+    #[must_use]
+    pub fn min_ssimulacra2(self) -> f64 {
+        match self {
+            Self::Imperceptible => 90.0,
+            Self::Marginal => 80.0,
+            Self::Subtle => 70.0,
+            Self::Noticeable => 50.0,
+            Self::Degraded => f64::NEG_INFINITY,
+        }
+    }
+
+    /// Get the maximum Butteraugli value for this perception level.
+    #[must_use]
+    pub fn max_butteraugli(self) -> f64 {
+        match self {
+            Self::Imperceptible => 1.0,
+            Self::Marginal => 2.0,
+            Self::Subtle => 3.0,
+            Self::Noticeable => 5.0,
             Self::Degraded => f64::INFINITY,
         }
     }
@@ -187,14 +292,32 @@ mod tests {
 
     #[test]
     fn test_perception_level_thresholds() {
-        assert_eq!(PerceptionLevel::from_dssim(0.0001), PerceptionLevel::Imperceptible);
-        assert_eq!(PerceptionLevel::from_dssim(0.0003), PerceptionLevel::Marginal);
-        assert_eq!(PerceptionLevel::from_dssim(0.0005), PerceptionLevel::Marginal);
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.0001),
+            PerceptionLevel::Imperceptible
+        );
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.0003),
+            PerceptionLevel::Marginal
+        );
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.0005),
+            PerceptionLevel::Marginal
+        );
         assert_eq!(PerceptionLevel::from_dssim(0.0007), PerceptionLevel::Subtle);
         assert_eq!(PerceptionLevel::from_dssim(0.001), PerceptionLevel::Subtle);
-        assert_eq!(PerceptionLevel::from_dssim(0.0015), PerceptionLevel::Noticeable);
-        assert_eq!(PerceptionLevel::from_dssim(0.002), PerceptionLevel::Noticeable);
-        assert_eq!(PerceptionLevel::from_dssim(0.003), PerceptionLevel::Degraded);
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.0015),
+            PerceptionLevel::Noticeable
+        );
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.002),
+            PerceptionLevel::Noticeable
+        );
+        assert_eq!(
+            PerceptionLevel::from_dssim(0.003),
+            PerceptionLevel::Degraded
+        );
         assert_eq!(PerceptionLevel::from_dssim(0.01), PerceptionLevel::Degraded);
     }
 

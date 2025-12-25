@@ -30,7 +30,7 @@
 //!
 //! - [`error`]: Error types for the library
 //! - [`viewing`]: Viewing condition modeling for perceptual metrics
-//! - [`metrics`]: Quality metrics (DSSIM, PSNR)
+//! - [`metrics`]: Quality metrics (DSSIM, SSIMULACRA2, Butteraugli, PSNR)
 //! - [`eval`]: Evaluation session and report generation
 //! - [`corpus`]: Test corpus management
 //! - [`import`]: CSV import for third-party results
@@ -45,13 +45,13 @@ pub mod stats;
 pub mod viewing;
 
 // Re-export commonly used types
+pub use corpus::{Corpus, CorpusImage, ImageCategory, SparseCheckout, SparseFilter, SparseStatus};
 pub use error::{Error, Result};
 pub use eval::{
+    report::{CodecResult, CorpusReport, ImageReport},
     session::{EvalConfig, EvalSession, ImageData},
-    report::{CorpusReport, ImageReport, CodecResult},
 };
-pub use metrics::{MetricConfig, MetricResult};
-pub use viewing::ViewingCondition;
-pub use corpus::{Corpus, CorpusImage, ImageCategory, SparseCheckout, SparseFilter, SparseStatus};
 pub use import::{CsvImporter, CsvSchema, ExternalResult};
+pub use metrics::{MetricConfig, MetricResult, PerceptionLevel};
 pub use stats::{ParetoFront, RDPoint, Summary};
+pub use viewing::ViewingCondition;

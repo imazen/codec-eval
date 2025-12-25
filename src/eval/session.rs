@@ -14,7 +14,7 @@ use rgb::{RGB8, RGBA8};
 use crate::error::Result;
 use crate::eval::report::{CodecResult, CorpusReport, ImageReport};
 use crate::metrics::dssim::rgb8_to_dssim_image;
-use crate::metrics::{calculate_psnr, MetricConfig, MetricResult};
+use crate::metrics::{MetricConfig, MetricResult, calculate_psnr};
 use crate::viewing::ViewingCondition;
 
 /// Image data accepted by the evaluation session.
@@ -76,18 +76,14 @@ impl ImageData {
     #[must_use]
     pub fn to_rgb8_vec(&self) -> Vec<u8> {
         match self {
-            Self::Rgb8(img) => {
-                img.pixels()
-                    .flat_map(|p| [p.r, p.g, p.b])
-                    .collect()
-            }
-            Self::Rgba8(img) => {
-                img.pixels()
-                    .flat_map(|p| [p.r, p.g, p.b])
-                    .collect()
-            }
+            Self::Rgb8(img) => img.pixels().flat_map(|p| [p.r, p.g, p.b]).collect(),
+            Self::Rgba8(img) => img.pixels().flat_map(|p| [p.r, p.g, p.b]).collect(),
             Self::RgbSlice { data, .. } => data.clone(),
-            Self::RgbaSlice { data, width, height } => {
+            Self::RgbaSlice {
+                data,
+                width,
+                height,
+            } => {
                 let mut rgb = Vec::with_capacity(width * height * 3);
                 for chunk in data.chunks_exact(4) {
                     rgb.push(chunk[0]);
@@ -223,9 +219,9 @@ impl EvalConfigBuilder {
             cache_dir: self.cache_dir,
             viewing: self.viewing.unwrap_or_default(),
             metrics: self.metrics.unwrap_or_else(MetricConfig::all),
-            quality_levels: self.quality_levels.unwrap_or_else(|| {
-                vec![50.0, 60.0, 70.0, 80.0, 85.0, 90.0, 95.0]
-            }),
+            quality_levels: self
+                .quality_levels
+                .unwrap_or_else(|| vec![50.0, 60.0, 70.0, 80.0, 85.0, 90.0, 95.0]),
         }
     }
 }
@@ -342,7 +338,8 @@ impl EvalSession {
                     let decode_time = start.elapsed();
 
                     let decoded_rgb = decoded.to_rgb8_vec();
-                    let metrics = self.calculate_metrics(&reference_rgb, &decoded_rgb, width, height)?;
+                    let metrics =
+                        self.calculate_metrics(&reference_rgb, &decoded_rgb, width, height)?;
 
                     report.results.push(CodecResult {
                         codec_id: codec.id.clone(),
@@ -411,6 +408,24 @@ impl EvalSession {
             )?);
         }
 
+        if self.config.metrics.ssimulacra2 {
+            result.ssimulacra2 = Some(crate::metrics::ssimulacra2::calculate_ssimulacra2(
+                reference,
+                test,
+                width as usize,
+                height as usize,
+            )?);
+        }
+
+        if self.config.metrics.butteraugli {
+            result.butteraugli = Some(crate::metrics::butteraugli::calculate_butteraugli(
+                reference,
+                test,
+                width as usize,
+                height as usize,
+            )?);
+        }
+
         Ok(result)
     }
 
@@ -455,6 +470,8 @@ impl EvalSession {
             "encode_ms",
             "decode_ms",
             "dssim",
+            "ssimulacra2",
+            "butteraugli",
             "psnr",
             "perception",
         ])?;
@@ -469,10 +486,28 @@ impl EvalSession {
                     &result.file_size.to_string(),
                     &format!("{:.4}", result.bits_per_pixel),
                     &result.encode_time.as_millis().to_string(),
-                    &result.decode_time.map_or(String::new(), |d| d.as_millis().to_string()),
-                    &result.metrics.dssim.map_or(String::new(), |d| format!("{:.6}", d)),
-                    &result.metrics.psnr.map_or(String::new(), |p| format!("{:.2}", p)),
-                    &result.perception.map_or(String::new(), |p| p.code().to_string()),
+                    &result
+                        .decode_time
+                        .map_or(String::new(), |d| d.as_millis().to_string()),
+                    &result
+                        .metrics
+                        .dssim
+                        .map_or(String::new(), |d| format!("{:.6}", d)),
+                    &result
+                        .metrics
+                        .ssimulacra2
+                        .map_or(String::new(), |s| format!("{:.2}", s)),
+                    &result
+                        .metrics
+                        .butteraugli
+                        .map_or(String::new(), |b| format!("{:.4}", b)),
+                    &result
+                        .metrics
+                        .psnr
+                        .map_or(String::new(), |p| format!("{:.2}", p)),
+                    &result
+                        .perception
+                        .map_or(String::new(), |p| p.code().to_string()),
                 ])?;
             }
         }
@@ -487,10 +522,12 @@ mod tests {
     use super::*;
 
     fn create_test_image(width: usize, height: usize) -> ImageData {
-        let data: Vec<u8> = (0..width * height * 3)
-            .map(|i| (i % 256) as u8)
-            .collect();
-        ImageData::RgbSlice { data, width, height }
+        let data: Vec<u8> = (0..width * height * 3).map(|i| (i % 256) as u8).collect();
+        ImageData::RgbSlice {
+            data,
+            width,
+            height,
+        }
     }
 
     #[test]
@@ -502,8 +539,7 @@ mod tests {
 
     #[test]
     fn test_encode_request() {
-        let req = EncodeRequest::new(80.0)
-            .with_param("subsampling", "4:2:0");
+        let req = EncodeRequest::new(80.0).with_param("subsampling", "4:2:0");
         assert!((req.quality - 80.0).abs() < f64::EPSILON);
         assert_eq!(req.params.get("subsampling"), Some(&"4:2:0".to_string()));
     }
@@ -525,9 +561,7 @@ mod tests {
 
     #[test]
     fn test_session_add_codec() {
-        let config = EvalConfig::builder()
-            .report_dir("/tmp/test")
-            .build();
+        let config = EvalConfig::builder().report_dir("/tmp/test").build();
 
         let mut session = EvalSession::new(config);
         session.add_codec("test", "1.0", Box::new(|_, _| Ok(vec![0u8; 100])));
