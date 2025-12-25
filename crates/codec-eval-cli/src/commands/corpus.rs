@@ -9,17 +9,35 @@ use crate::CorpusAction;
 
 pub fn run(action: CorpusAction, verbose: bool) -> Result<()> {
     match action {
-        CorpusAction::Discover { path, output, checksums } => {
-            discover(&path, output.as_deref(), checksums, verbose)
-        }
+        CorpusAction::Discover {
+            path,
+            output,
+            checksums,
+        } => discover(&path, output.as_deref(), checksums, verbose),
         CorpusAction::Info { path } => info(&path, verbose),
-        CorpusAction::List { path, category, format, min_width, min_height } => {
-            list(&path, category.as_deref(), format.as_deref(), min_width, min_height, verbose)
-        }
+        CorpusAction::List {
+            path,
+            category,
+            format,
+            min_width,
+            min_height,
+        } => list(
+            &path,
+            category.as_deref(),
+            format.as_deref(),
+            min_width,
+            min_height,
+            verbose,
+        ),
     }
 }
 
-fn discover(path: &PathBuf, output: Option<&std::path::Path>, checksums: bool, verbose: bool) -> Result<()> {
+fn discover(
+    path: &PathBuf,
+    output: Option<&std::path::Path>,
+    checksums: bool,
+    verbose: bool,
+) -> Result<()> {
     if verbose {
         eprintln!("Discovering images in: {}", path.display());
     }
@@ -31,7 +49,8 @@ fn discover(path: &PathBuf, output: Option<&std::path::Path>, checksums: bool, v
         if verbose {
             eprintln!("Computing checksums...");
         }
-        let count = corpus.compute_checksums()
+        let count = corpus
+            .compute_checksums()
             .context("Failed to compute checksums")?;
         if verbose {
             eprintln!("Computed {} checksums", count);
@@ -41,12 +60,14 @@ fn discover(path: &PathBuf, output: Option<&std::path::Path>, checksums: bool, v
     let stats = corpus.stats();
     println!("Discovered {} images", stats.image_count);
     println!("  Total size: {} bytes", stats.total_bytes);
-    println!("  Dimensions: {}x{} to {}x{}",
-        stats.min_width, stats.min_height,
-        stats.max_width, stats.max_height);
+    println!(
+        "  Dimensions: {}x{} to {}x{}",
+        stats.min_width, stats.min_height, stats.max_width, stats.max_height
+    );
 
     if let Some(output_path) = output {
-        corpus.save(output_path)
+        corpus
+            .save(output_path)
             .with_context(|| format!("Failed to save corpus to {}", output_path.display()))?;
         println!("Saved manifest to: {}", output_path.display());
     } else {
@@ -73,12 +94,15 @@ fn info(path: &PathBuf, _verbose: bool) -> Result<()> {
     println!("  Path: {}", corpus.root_path.display());
     println!("  Images: {}", stats.image_count);
     println!("  Total pixels: {}", stats.total_pixels);
-    println!("  Total size: {} bytes ({:.2} MB)",
+    println!(
+        "  Total size: {} bytes ({:.2} MB)",
         stats.total_bytes,
-        stats.total_bytes as f64 / 1_000_000.0);
-    println!("  Dimensions: {}x{} to {}x{}",
-        stats.min_width, stats.min_height,
-        stats.max_width, stats.max_height);
+        stats.total_bytes as f64 / 1_000_000.0
+    );
+    println!(
+        "  Dimensions: {}x{} to {}x{}",
+        stats.min_width, stats.min_height, stats.max_width, stats.max_height
+    );
 
     if !corpus.metadata.category_counts.is_empty() {
         println!("  Categories:");
@@ -148,7 +172,8 @@ fn list(
             }
         }
 
-        println!("{}\t{}x{}\t{}\t{}",
+        println!(
+            "{}\t{}x{}\t{}\t{}",
             img.relative_path.display(),
             img.width,
             img.height,

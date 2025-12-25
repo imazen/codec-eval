@@ -269,8 +269,8 @@ impl SparseCheckout {
     /// Get status of sparse checkout.
     pub fn status(&self) -> Result<SparseStatus> {
         // Check if sparse checkout is enabled
-        let config = run_git(&self.repo_path, &["config", "core.sparseCheckout"])
-            .unwrap_or_default();
+        let config =
+            run_git(&self.repo_path, &["config", "core.sparseCheckout"]).unwrap_or_default();
         let enabled = config.trim() == "true";
 
         // Get patterns
@@ -395,8 +395,7 @@ fn matches_pattern(path: &str, pattern: &str) -> bool {
     if pattern.starts_with("**/") && pattern.ends_with("/**") {
         let middle = pattern.trim_start_matches("**/").trim_end_matches("/**");
         // Match as a directory component anywhere
-        return path.starts_with(&format!("{middle}/"))
-            || path.contains(&format!("/{middle}/"));
+        return path.starts_with(&format!("{middle}/")) || path.contains(&format!("/{middle}/"));
     }
 
     if pattern.ends_with("/**") {

@@ -1,7 +1,7 @@
 //! Sparse checkout commands.
 
 use anyhow::{Context, Result};
-use codec_eval::corpus::sparse::{preview_patterns, SparseCheckout, SparseFilter};
+use codec_eval::corpus::sparse::{SparseCheckout, SparseFilter, preview_patterns};
 
 use crate::SparseAction;
 
@@ -175,7 +175,9 @@ fn add(
     println!("Added {} patterns", added);
 
     // Reapply
-    sparse.reapply().context("Failed to reapply sparse checkout")?;
+    sparse
+        .reapply()
+        .context("Failed to reapply sparse checkout")?;
 
     let status = sparse.status()?;
     println!("Files now checked out: {}", status.checked_out_files);
@@ -235,7 +237,11 @@ fn status(path: &std::path::Path, _verbose: bool) -> Result<()> {
     println!("Repository: {}", path.display());
     println!(
         "Sparse checkout: {}",
-        if status.enabled { "enabled" } else { "disabled" }
+        if status.enabled {
+            "enabled"
+        } else {
+            "disabled"
+        }
     );
     println!("Patterns: {}", status.patterns.len());
     println!("Files checked out: {}", status.checked_out_files);

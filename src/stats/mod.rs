@@ -3,8 +3,10 @@
 //! This module provides tools for analyzing codec comparison results,
 //! including Pareto front calculation for rate-distortion analysis.
 
+pub mod chart;
 mod pareto;
 
+pub use chart::{generate_svg, ChartConfig, ChartPoint, ChartSeries};
 pub use pareto::{ParetoFront, RDPoint};
 
 use serde::{Deserialize, Serialize};

@@ -14,11 +14,17 @@ const SUPPORTED_EXTENSIONS: &[&str] = &[
 /// Discover images in a directory.
 pub fn discover_corpus(path: &Path) -> Result<Corpus> {
     if !path.exists() {
-        return Err(Error::Corpus(format!("Path does not exist: {}", path.display())));
+        return Err(Error::Corpus(format!(
+            "Path does not exist: {}",
+            path.display()
+        )));
     }
 
     if !path.is_dir() {
-        return Err(Error::Corpus(format!("Path is not a directory: {}", path.display())));
+        return Err(Error::Corpus(format!(
+            "Path is not a directory: {}",
+            path.display()
+        )));
     }
 
     let name = path
@@ -40,18 +46,22 @@ pub fn discover_corpus(path: &Path) -> Result<Corpus> {
     Ok(corpus)
 }
 
-fn discover_recursive(
-    root: &Path,
-    current: &Path,
-    images: &mut Vec<CorpusImage>,
-) -> Result<()> {
+fn discover_recursive(root: &Path, current: &Path, images: &mut Vec<CorpusImage>) -> Result<()> {
     let entries = fs::read_dir(current).map_err(|e| {
-        Error::Corpus(format!("Failed to read directory {}: {}", current.display(), e))
+        Error::Corpus(format!(
+            "Failed to read directory {}: {}",
+            current.display(),
+            e
+        ))
     })?;
 
     for entry in entries {
         let entry = entry.map_err(|e| {
-            Error::Corpus(format!("Failed to read entry in {}: {}", current.display(), e))
+            Error::Corpus(format!(
+                "Failed to read entry in {}: {}",
+                current.display(),
+                e
+            ))
         })?;
 
         let path = entry.path();
@@ -151,7 +161,21 @@ fn parse_jpeg_dimensions(data: &[u8]) -> Option<(u32, u32)> {
         let marker = data[i + 1];
 
         // SOF markers (Start Of Frame)
-        if matches!(marker, 0xC0 | 0xC1 | 0xC2 | 0xC3 | 0xC5 | 0xC6 | 0xC7 | 0xC9 | 0xCA | 0xCB | 0xCD | 0xCE | 0xCF) {
+        if matches!(
+            marker,
+            0xC0 | 0xC1
+                | 0xC2
+                | 0xC3
+                | 0xC5
+                | 0xC6
+                | 0xC7
+                | 0xC9
+                | 0xCA
+                | 0xCB
+                | 0xCD
+                | 0xCE
+                | 0xCF
+        ) {
             let height = u32::from(data[i + 5]) << 8 | u32::from(data[i + 6]);
             let width = u32::from(data[i + 7]) << 8 | u32::from(data[i + 8]);
             return Some((width, height));
@@ -192,12 +216,8 @@ fn parse_webp_dimensions(data: &[u8]) -> Option<(u32, u32)> {
 
     // VP8X format (extended)
     if data.len() >= 30 && &data[12..16] == b"VP8X" {
-        let width = u32::from(data[24])
-            | (u32::from(data[25]) << 8)
-            | (u32::from(data[26]) << 16);
-        let height = u32::from(data[27])
-            | (u32::from(data[28]) << 8)
-            | (u32::from(data[29]) << 16);
+        let width = u32::from(data[24]) | (u32::from(data[25]) << 8) | (u32::from(data[26]) << 16);
+        let height = u32::from(data[27]) | (u32::from(data[28]) << 8) | (u32::from(data[29]) << 16);
         return Some((width + 1, height + 1));
     }
 

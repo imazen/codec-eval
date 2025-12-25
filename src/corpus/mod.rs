@@ -203,7 +203,8 @@ impl Corpus {
         for (i, img) in self.images.iter().enumerate() {
             // Use checksum if available, otherwise use index
             let hash = img.checksum.as_ref().map_or(i, |s| {
-                s.bytes().fold(0usize, |acc, b| acc.wrapping_add(b as usize))
+                s.bytes()
+                    .fold(0usize, |acc, b| acc.wrapping_add(b as usize))
             });
 
             if (hash % 1000) < (train_ratio * 1000.0) as usize {
@@ -246,10 +247,7 @@ impl Corpus {
             }
         }
 
-        by_checksum
-            .into_values()
-            .filter(|v| v.len() > 1)
-            .collect()
+        by_checksum.into_values().filter(|v| v.len() > 1).collect()
     }
 
     /// Update category counts in metadata.
@@ -258,7 +256,11 @@ impl Corpus {
 
         for img in &self.images {
             if let Some(cat) = img.category {
-                *self.metadata.category_counts.entry(cat.to_string()).or_insert(0) += 1;
+                *self
+                    .metadata
+                    .category_counts
+                    .entry(cat.to_string())
+                    .or_insert(0) += 1;
             }
         }
     }

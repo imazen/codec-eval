@@ -88,7 +88,11 @@ impl ParetoFront {
         }
 
         // Sort by bpp for easy plotting
-        front.sort_by(|a, b| a.bpp.partial_cmp(&b.bpp).unwrap_or(std::cmp::Ordering::Equal));
+        front.sort_by(|a, b| {
+            a.bpp
+                .partial_cmp(&b.bpp)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         Self { points: front }
     }
@@ -117,10 +121,7 @@ impl ParetoFront {
     /// Get points that achieve at most the target bpp.
     #[must_use]
     pub fn at_bpp(&self, max_bpp: f64) -> Vec<&RDPoint> {
-        self.points
-            .iter()
-            .filter(|p| p.bpp <= max_bpp)
-            .collect()
+        self.points.iter().filter(|p| p.bpp <= max_bpp).collect()
     }
 
     /// Get the best point (highest quality) at or below the target bpp.
@@ -129,7 +130,11 @@ impl ParetoFront {
         self.points
             .iter()
             .filter(|p| p.bpp <= max_bpp)
-            .max_by(|a, b| a.quality.partial_cmp(&b.quality).unwrap_or(std::cmp::Ordering::Equal))
+            .max_by(|a, b| {
+                a.quality
+                    .partial_cmp(&b.quality)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
     }
 
     /// Get the most efficient point (lowest bpp) at or above the target quality.
@@ -138,7 +143,11 @@ impl ParetoFront {
         self.points
             .iter()
             .filter(|p| p.quality >= min_quality)
-            .min_by(|a, b| a.bpp.partial_cmp(&b.bpp).unwrap_or(std::cmp::Ordering::Equal))
+            .min_by(|a, b| {
+                a.bpp
+                    .partial_cmp(&b.bpp)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
     }
 
     /// Get unique codecs on the Pareto front.
@@ -153,10 +162,7 @@ impl ParetoFront {
     /// Filter to points from a specific codec.
     #[must_use]
     pub fn filter_codec(&self, codec: &str) -> Vec<&RDPoint> {
-        self.points
-            .iter()
-            .filter(|p| p.codec == codec)
-            .collect()
+        self.points.iter().filter(|p| p.codec == codec).collect()
     }
 
     /// Compute per-codec Pareto fronts.

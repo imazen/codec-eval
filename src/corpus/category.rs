@@ -128,9 +128,18 @@ mod tests {
 
     #[test]
     fn test_category_from_str_loose() {
-        assert_eq!(ImageCategory::from_str_loose("PHOTO"), Some(ImageCategory::Photo));
-        assert_eq!(ImageCategory::from_str_loose("Photos"), Some(ImageCategory::Photo));
-        assert_eq!(ImageCategory::from_str_loose("artwork"), Some(ImageCategory::Illustration));
+        assert_eq!(
+            ImageCategory::from_str_loose("PHOTO"),
+            Some(ImageCategory::Photo)
+        );
+        assert_eq!(
+            ImageCategory::from_str_loose("Photos"),
+            Some(ImageCategory::Photo)
+        );
+        assert_eq!(
+            ImageCategory::from_str_loose("artwork"),
+            Some(ImageCategory::Illustration)
+        );
         assert_eq!(ImageCategory::from_str_loose("invalid"), None);
     }
 }

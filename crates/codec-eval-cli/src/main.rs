@@ -251,14 +251,21 @@ fn main() -> anyhow::Result<()> {
     match cli.command {
         Commands::Corpus { action } => commands::corpus::run(action, cli.verbose),
         Commands::Sparse { action } => commands::sparse::run(action, cli.verbose),
-        Commands::Import { input, output, image_col, codec_col } => {
-            commands::import::run(input, output, image_col, codec_col, cli.verbose)
-        }
-        Commands::Pareto { input, output, metric } => {
-            commands::pareto::run(input, output, &metric, cli.verbose)
-        }
-        Commands::Stats { input, by_codec, by_image } => {
-            commands::stats::run(input, by_codec, by_image, cli.verbose)
-        }
+        Commands::Import {
+            input,
+            output,
+            image_col,
+            codec_col,
+        } => commands::import::run(input, output, image_col, codec_col, cli.verbose),
+        Commands::Pareto {
+            input,
+            output,
+            metric,
+        } => commands::pareto::run(input, output, &metric, cli.verbose),
+        Commands::Stats {
+            input,
+            by_codec,
+            by_image,
+        } => commands::stats::run(input, by_codec, by_image, cli.verbose),
     }
 }

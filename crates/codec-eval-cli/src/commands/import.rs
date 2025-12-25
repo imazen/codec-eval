@@ -26,7 +26,8 @@ pub fn run(
     }
 
     let importer = CsvImporter::new(schema.build());
-    let results = importer.import(&input)
+    let results = importer
+        .import(&input)
         .with_context(|| format!("Failed to import CSV from {}", input.display()))?;
 
     println!("Imported {} results", results.len());

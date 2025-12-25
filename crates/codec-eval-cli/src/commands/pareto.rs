@@ -6,12 +6,7 @@ use anyhow::{Context, Result, bail};
 use codec_eval::import::ExternalResult;
 use codec_eval::stats::{ParetoFront, RDPoint};
 
-pub fn run(
-    input: PathBuf,
-    output: Option<PathBuf>,
-    metric: &str,
-    verbose: bool,
-) -> Result<()> {
+pub fn run(input: PathBuf, output: Option<PathBuf>, metric: &str, verbose: bool) -> Result<()> {
     if verbose {
         eprintln!("Loading results from: {}", input.display());
     }
@@ -62,7 +57,11 @@ pub fn run(
     // Compute overall Pareto front
     let front = ParetoFront::compute(&points);
 
-    println!("Pareto Front ({} points from {} total)", front.len(), points.len());
+    println!(
+        "Pareto Front ({} points from {} total)",
+        front.len(),
+        points.len()
+    );
     println!();
 
     // Show codecs on the front
@@ -71,8 +70,14 @@ pub fn run(
     println!();
 
     // Show points
-    println!("{:<15} {:>8} {:>10} {:>10} {:>12}",
-        "Codec", "Quality", "BPP", metric.to_uppercase(), "Encode(ms)");
+    println!(
+        "{:<15} {:>8} {:>10} {:>10} {:>12}",
+        "Codec",
+        "Quality",
+        "BPP",
+        metric.to_uppercase(),
+        "Encode(ms)"
+    );
     println!("{:-<60}", "");
 
     for point in &front.points {
@@ -81,12 +86,15 @@ pub fn run(
             _ => format!("{:.2}", point.quality),
         };
 
-        println!("{:<15} {:>8.1} {:>10.4} {:>10} {:>12}",
+        println!(
+            "{:<15} {:>8.1} {:>10.4} {:>10} {:>12}",
             point.codec,
             point.quality_setting,
             point.bpp,
             quality_str,
-            point.encode_time_ms.map_or("-".to_string(), |t| format!("{:.0}", t))
+            point
+                .encode_time_ms
+                .map_or("-".to_string(), |t| format!("{:.0}", t))
         );
     }
 
@@ -123,6 +131,7 @@ fn load_results(path: &PathBuf) -> Result<Vec<ExternalResult>> {
 
     // Try CSV
     let importer = codec_eval::import::CsvImporter::auto_detect();
-    importer.import(path)
+    importer
+        .import(path)
         .with_context(|| format!("Failed to parse {} as JSON or CSV", path.display()))
 }

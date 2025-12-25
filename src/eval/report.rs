@@ -117,7 +117,9 @@ impl ImageReport {
                 // Compare by DSSIM (lower is better), so we invert
                 let a_quality = a.metrics.dssim.map(|d| -d).unwrap_or(f64::NEG_INFINITY);
                 let b_quality = b.metrics.dssim.map(|d| -d).unwrap_or(f64::NEG_INFINITY);
-                a_quality.partial_cmp(&b_quality).unwrap_or(std::cmp::Ordering::Equal)
+                a_quality
+                    .partial_cmp(&b_quality)
+                    .unwrap_or(std::cmp::Ordering::Equal)
             })
     }
 

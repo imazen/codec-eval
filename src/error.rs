@@ -8,6 +8,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Errors that can occur during codec evaluation.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     /// Failed to load an image file.
     #[error("Image load failed: {path}: {reason}")]

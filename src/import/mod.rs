@@ -117,7 +117,12 @@ impl CsvSchema {
     }
 
     /// Try to find a column index by name (case-insensitive, with aliases).
-    fn find_column(&self, headers: &[&str], primary: Option<&str>, aliases: &[&str]) -> Option<usize> {
+    fn find_column(
+        &self,
+        headers: &[&str],
+        primary: Option<&str>,
+        aliases: &[&str],
+    ) -> Option<usize> {
         // First try the configured column name
         if let Some(name) = primary {
             if let Some(idx) = find_header_index(headers, name) {
@@ -321,18 +326,14 @@ impl CsvImporter {
         );
 
         // Check we have at least image and codec columns
-        let image_idx = image_idx.ok_or_else(|| {
-            Error::CsvImport {
-                line: 0,
-                reason: "Could not find image/filename column".to_string(),
-            }
+        let image_idx = image_idx.ok_or_else(|| Error::CsvImport {
+            line: 0,
+            reason: "Could not find image/filename column".to_string(),
         })?;
 
-        let codec_idx = codec_idx.ok_or_else(|| {
-            Error::CsvImport {
-                line: 0,
-                reason: "Could not find codec/encoder column".to_string(),
-            }
+        let codec_idx = codec_idx.ok_or_else(|| Error::CsvImport {
+            line: 0,
+            reason: "Could not find codec/encoder column".to_string(),
         })?;
 
         let mut results = Vec::new();
@@ -354,14 +355,30 @@ impl CsvImporter {
                 image_name,
                 codec,
                 codec_version: version_idx.and_then(|i| record.get(i)).map(String::from),
-                quality_setting: quality_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                file_size: size_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                bits_per_pixel: bpp_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                ssimulacra2: ssimulacra2_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                dssim: dssim_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                psnr: psnr_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                butteraugli: butteraugli_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
-                encode_time_ms: encode_time_idx.and_then(|i| record.get(i)).and_then(|s| s.parse().ok()),
+                quality_setting: quality_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                file_size: size_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                bits_per_pixel: bpp_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                ssimulacra2: ssimulacra2_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                dssim: dssim_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                psnr: psnr_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                butteraugli: butteraugli_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
+                encode_time_ms: encode_time_idx
+                    .and_then(|i| record.get(i))
+                    .and_then(|s| s.parse().ok()),
                 extra: HashMap::new(),
             };
 
@@ -375,9 +392,7 @@ impl CsvImporter {
 /// Find a header index by name (case-insensitive).
 fn find_header_index(headers: &[&str], name: &str) -> Option<usize> {
     let name_lower = name.to_lowercase();
-    headers
-        .iter()
-        .position(|h| h.to_lowercase() == name_lower)
+    headers.iter().position(|h| h.to_lowercase() == name_lower)
 }
 
 #[cfg(test)]

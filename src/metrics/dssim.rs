@@ -80,13 +80,11 @@ pub fn calculate_dssim(
 pub fn rgb8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<RGBA<f32>> {
     let pixels: Vec<RGBA<f32>> = data
         .chunks_exact(3)
-        .map(|rgb| {
-            RGBA {
-                r: f32::from(rgb[0]) / 255.0,
-                g: f32::from(rgb[1]) / 255.0,
-                b: f32::from(rgb[2]) / 255.0,
-                a: 1.0,
-            }
+        .map(|rgb| RGBA {
+            r: f32::from(rgb[0]) / 255.0,
+            g: f32::from(rgb[1]) / 255.0,
+            b: f32::from(rgb[2]) / 255.0,
+            a: 1.0,
         })
         .collect();
 
@@ -108,13 +106,11 @@ pub fn rgb8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<R
 pub fn rgba8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<RGBA<f32>> {
     let pixels: Vec<RGBA<f32>> = data
         .chunks_exact(4)
-        .map(|rgba| {
-            RGBA {
-                r: f32::from(rgba[0]) / 255.0,
-                g: f32::from(rgba[1]) / 255.0,
-                b: f32::from(rgba[2]) / 255.0,
-                a: f32::from(rgba[3]) / 255.0,
-            }
+        .map(|rgba| RGBA {
+            r: f32::from(rgba[0]) / 255.0,
+            g: f32::from(rgba[1]) / 255.0,
+            b: f32::from(rgba[2]) / 255.0,
+            a: f32::from(rgba[3]) / 255.0,
         })
         .collect();
 
@@ -128,21 +124,39 @@ mod tests {
     #[test]
     fn test_identical_images() {
         let pixels: Vec<RGBA<f32>> = (0..100 * 100)
-            .map(|_| RGBA { r: 0.5, g: 0.5, b: 0.5, a: 1.0 })
+            .map(|_| RGBA {
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+                a: 1.0,
+            })
             .collect();
         let img = ImgVec::new(pixels, 100, 100);
 
         let dssim = calculate_dssim(&img, &img, &ViewingCondition::desktop()).unwrap();
-        assert!(dssim < 0.0001, "Identical images should have near-zero DSSIM");
+        assert!(
+            dssim < 0.0001,
+            "Identical images should have near-zero DSSIM"
+        );
     }
 
     #[test]
     fn test_different_images() {
         let ref_pixels: Vec<RGBA<f32>> = (0..100 * 100)
-            .map(|_| RGBA { r: 0.3, g: 0.3, b: 0.3, a: 1.0 })
+            .map(|_| RGBA {
+                r: 0.3,
+                g: 0.3,
+                b: 0.3,
+                a: 1.0,
+            })
             .collect();
         let test_pixels: Vec<RGBA<f32>> = (0..100 * 100)
-            .map(|_| RGBA { r: 0.7, g: 0.7, b: 0.7, a: 1.0 })
+            .map(|_| RGBA {
+                r: 0.7,
+                g: 0.7,
+                b: 0.7,
+                a: 1.0,
+            })
             .collect();
 
         let ref_img = ImgVec::new(ref_pixels, 100, 100);
@@ -155,10 +169,20 @@ mod tests {
     #[test]
     fn test_dimension_mismatch() {
         let small: Vec<RGBA<f32>> = (0..50 * 50)
-            .map(|_| RGBA { r: 0.5, g: 0.5, b: 0.5, a: 1.0 })
+            .map(|_| RGBA {
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+                a: 1.0,
+            })
             .collect();
         let large: Vec<RGBA<f32>> = (0..100 * 100)
-            .map(|_| RGBA { r: 0.5, g: 0.5, b: 0.5, a: 1.0 })
+            .map(|_| RGBA {
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+                a: 1.0,
+            })
             .collect();
 
         let small_img = ImgVec::new(small, 50, 50);

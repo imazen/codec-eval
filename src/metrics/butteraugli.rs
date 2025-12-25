@@ -56,7 +56,12 @@ pub fn calculate_butteraugli(
     }
 
     let params = ButteraugliParams::default();
-    let result = compute_butteraugli(reference, test, width, height, &params);
+    let result = compute_butteraugli(reference, test, width, height, &params).map_err(|e| {
+        Error::MetricCalculation {
+            metric: "Butteraugli".to_string(),
+            reason: e.to_string(),
+        }
+    })?;
 
     Ok(result.score)
 }
@@ -104,7 +109,12 @@ pub fn calculate_butteraugli_with_intensity(
     }
 
     let params = ButteraugliParams::default().with_intensity_target(intensity_target);
-    let result = compute_butteraugli(reference, test, width, height, &params);
+    let result = compute_butteraugli(reference, test, width, height, &params).map_err(|e| {
+        Error::MetricCalculation {
+            metric: "Butteraugli".to_string(),
+            reason: e.to_string(),
+        }
+    })?;
 
     Ok(result.score)
 }
