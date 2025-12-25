@@ -389,9 +389,21 @@ impl EvalSession {
     ) -> Result<MetricResult> {
         let mut result = MetricResult::default();
 
+        // Apply XYB roundtrip to reference if enabled
+        let reference_for_metrics: std::borrow::Cow<'_, [u8]> = if self.config.metrics.xyb_roundtrip
+        {
+            std::borrow::Cow::Owned(crate::metrics::xyb_roundtrip(
+                reference,
+                width as usize,
+                height as usize,
+            ))
+        } else {
+            std::borrow::Cow::Borrowed(reference)
+        };
+
         if self.config.metrics.psnr {
             result.psnr = Some(calculate_psnr(
-                reference,
+                &reference_for_metrics,
                 test,
                 width as usize,
                 height as usize,
@@ -399,7 +411,8 @@ impl EvalSession {
         }
 
         if self.config.metrics.dssim {
-            let ref_img = rgb8_to_dssim_image(reference, width as usize, height as usize);
+            let ref_img =
+                rgb8_to_dssim_image(&reference_for_metrics, width as usize, height as usize);
             let test_img = rgb8_to_dssim_image(test, width as usize, height as usize);
             result.dssim = Some(crate::metrics::dssim::calculate_dssim(
                 &ref_img,
@@ -410,7 +423,7 @@ impl EvalSession {
 
         if self.config.metrics.ssimulacra2 {
             result.ssimulacra2 = Some(crate::metrics::ssimulacra2::calculate_ssimulacra2(
-                reference,
+                &reference_for_metrics,
                 test,
                 width as usize,
                 height as usize,
@@ -419,7 +432,7 @@ impl EvalSession {
 
         if self.config.metrics.butteraugli {
             result.butteraugli = Some(crate::metrics::butteraugli::calculate_butteraugli(
-                reference,
+                &reference_for_metrics,
                 test,
                 width as usize,
                 height as usize,

@@ -29,8 +29,12 @@
 pub mod butteraugli;
 pub mod dssim;
 pub mod ssimulacra2;
+pub mod xyb;
 
 use serde::{Deserialize, Serialize};
+
+// Re-export XYB roundtrip for convenience
+pub use xyb::xyb_roundtrip;
 
 /// Configuration for which metrics to calculate.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -43,6 +47,14 @@ pub struct MetricConfig {
     pub butteraugli: bool,
     /// Calculate PSNR (peak signal-to-noise ratio). NOT RECOMMENDED.
     pub psnr: bool,
+    /// Roundtrip reference through XYB color space before comparing.
+    ///
+    /// When enabled, the reference image is converted RGB → XYB → u8 → XYB → RGB
+    /// before computing metrics. This isolates true compression error from
+    /// color space conversion error.
+    ///
+    /// Recommended for codecs that operate in XYB color space (e.g., jpegli).
+    pub xyb_roundtrip: bool,
 }
 
 impl MetricConfig {
@@ -54,6 +66,7 @@ impl MetricConfig {
             ssimulacra2: true,
             butteraugli: true,
             psnr: true,
+            xyb_roundtrip: false,
         }
     }
 
@@ -65,6 +78,7 @@ impl MetricConfig {
             ssimulacra2: false,
             butteraugli: false,
             psnr: true,
+            xyb_roundtrip: false,
         }
     }
 
@@ -76,6 +90,23 @@ impl MetricConfig {
             ssimulacra2: true,
             butteraugli: true,
             psnr: false,
+            xyb_roundtrip: false,
+        }
+    }
+
+    /// Perceptual metrics with XYB roundtrip. RECOMMENDED for XYB codecs.
+    ///
+    /// Same as `perceptual()` but with XYB roundtrip enabled.
+    /// This gives fairer comparisons for codecs that operate in XYB color space
+    /// (like jpegli) by isolating compression error from color space conversion error.
+    #[must_use]
+    pub fn perceptual_xyb() -> Self {
+        Self {
+            dssim: true,
+            ssimulacra2: true,
+            butteraugli: true,
+            psnr: false,
+            xyb_roundtrip: true,
         }
     }
 
@@ -87,7 +118,15 @@ impl MetricConfig {
             ssimulacra2: true,
             butteraugli: false,
             psnr: false,
+            xyb_roundtrip: false,
         }
+    }
+
+    /// Enable XYB roundtrip on this config.
+    #[must_use]
+    pub fn with_xyb_roundtrip(mut self) -> Self {
+        self.xyb_roundtrip = true;
+        self
     }
 }
 
