@@ -1,0 +1,50 @@
+# Simplified codec-compare Docker image using system packages
+#
+# This is faster to build but may have older encoder versions.
+# For the latest encoders, use the full Dockerfile.
+#
+# Build: docker build -f Dockerfile.simple -t codec-compare:simple .
+
+FROM rust:1.85-bookworm AS builder
+
+# Install build dependencies (system packages)
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    pkg-config \
+    nasm \
+    # JPEG
+    libturbojpeg0-dev \
+    libmozjpeg-dev \
+    # WebP
+    libwebp-dev \
+    # AVIF (via system libavif)
+    libaom-dev \
+    libdav1d-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Build codec-compare with available features
+WORKDIR /app
+COPY . .
+
+# Build with mozjpeg and webp (no jpegli or AVIF without more setup)
+RUN cargo build --release --package codec-compare --features "mozjpeg,webp"
+
+# Runtime image
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y \
+    libturbojpeg0 \
+    libwebp7 \
+    libwebpdemux2 \
+    libwebpmux3 \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /app/target/release/codec-compare /usr/local/bin/
+
+RUN mkdir -p /corpus /reports
+WORKDIR /work
+
+ENTRYPOINT ["codec-compare"]
+CMD ["--help"]

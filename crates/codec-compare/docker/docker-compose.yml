@@ -1,0 +1,17 @@
+# Docker Compose for codec-compare
+#
+# Usage:
+#   docker-compose run --rm compare run --corpus /corpus --output /reports
+#   docker-compose run --rm compare list
+#
+# Mount your image corpus to /corpus and reports will be written to /reports
+
+services:
+  compare:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    volumes:
+      - ../../../corpus:/corpus:ro
+      - ../../../reports:/reports
+    working_dir: /work

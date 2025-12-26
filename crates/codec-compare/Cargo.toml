@@ -1,0 +1,71 @@
+[package]
+name = "codec-compare"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Multi-codec image comparison tool with Pareto analysis"
+rust-version = "1.85"
+
+[[bin]]
+name = "codec-compare"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+codec-eval = { path = "../.." }
+
+# Image handling
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+imgref = "1.10"
+rgb = "0.8"
+
+# CLI and utilities
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2"
+rayon = "1.10"
+anyhow = "1"
+
+# JPEG encoders
+mozjpeg = { version = "0.10", optional = true }
+jpegli = { version = "0.1", optional = true }
+
+# WebP encoder
+webp = { version = "0.3", optional = true }
+
+# AVIF encoder (native bindings via ravif for rav1e)
+ravif = { version = "0.11", optional = true }
+libavif-image = { version = "0.13", optional = true }
+
+# For Docker execution
+which = "7"
+
+[features]
+default = ["jpeg", "webp"]
+
+# Format feature groups
+jpeg = ["mozjpeg", "jpegli"]
+webp = ["dep:webp"]
+avif = ["ravif"]
+
+# Individual encoders
+mozjpeg = ["dep:mozjpeg"]
+jpegli = ["dep:jpegli"]
+ravif = ["dep:ravif"]
+
+# All encoders
+all = ["jpeg", "webp", "avif"]
+
+# Docker-only mode (no native deps, uses CLI tools)
+docker-only = []
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints.rust]
+unsafe_code = "warn"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"

@@ -27,11 +27,11 @@ use butteraugli_oxide::xyb;
 
 // XYB value ranges for all possible sRGB u8 inputs (empirically determined)
 const X_MIN: f32 = -0.016; // Slightly padded from -0.015386
-const X_MAX: f32 = 0.029;  // Slightly padded from 0.028100
+const X_MAX: f32 = 0.029; // Slightly padded from 0.028100
 const Y_MIN: f32 = 0.0;
-const Y_MAX: f32 = 0.846;  // Slightly padded from 0.845309
+const Y_MAX: f32 = 0.846; // Slightly padded from 0.845309
 const B_MIN: f32 = 0.0;
-const B_MAX: f32 = 0.846;  // Slightly padded from 0.845309
+const B_MAX: f32 = 0.846; // Slightly padded from 0.845309
 
 /// Quantize a value to u8 precision within a given range.
 #[inline]
