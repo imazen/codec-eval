@@ -26,6 +26,8 @@ clap = { version = "4.5", features = ["derive", "env"] }
 tempfile = "3"
 # ICC color management - moxcms is pure Rust and closest to libjxl's skcms
 moxcms = { version = "0.7", features = ["options"] }
+# JPEG decoding with ICC profile extraction
+jpeg-decoder = "0.3"
 
 [package]
 name = "codec-eval"
@@ -37,9 +39,11 @@ rust-version.workspace = true
 description = "Image codec comparison and evaluation library"
 
 [features]
-default = ["icc"]
+default = ["icc", "jpeg-decode"]
 # Enable ICC color profile support using moxcms (pure Rust, closest to libjxl's skcms)
 icc = ["moxcms"]
+# Enable JPEG decoding with ICC profile extraction
+jpeg-decode = ["jpeg-decoder"]
 
 [dependencies]
 thiserror.workspace = true
@@ -55,6 +59,8 @@ rayon.workspace = true
 chrono.workspace = true
 # Optional ICC support
 moxcms = { workspace = true, optional = true }
+# Optional JPEG decoding with ICC profile extraction
+jpeg-decoder = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile.workspace = true

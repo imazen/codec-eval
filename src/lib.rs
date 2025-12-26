@@ -37,6 +37,8 @@
 //! - [`stats`]: Statistical analysis and Pareto front
 
 pub mod corpus;
+#[cfg(feature = "jpeg-decode")]
+pub mod decode;
 pub mod error;
 pub mod eval;
 pub mod import;

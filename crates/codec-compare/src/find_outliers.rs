@@ -9,7 +9,7 @@
 //! matter for encoder selection and parameter tuning.
 
 use anyhow::{Context, Result};
-use butteraugli_oxide::{compute_butteraugli, ButteraugliParams};
+use butteraugli_oxide::{ButteraugliParams, compute_butteraugli};
 use clap::Parser;
 use rayon::prelude::*;
 use std::path::{Path, PathBuf};
@@ -148,14 +148,8 @@ fn compute_advantage(a_results: &[(u8, f64, f64)], b_results: &[(u8, f64, f64)])
 
     for &(q, a_bpp, a_butter) in a_results {
         // Find B result at same quality
-        if let Some(&(_, b_bpp, b_butter)) =
-            b_results.iter().find(|&&(bq, _, _)| bq == q)
-        {
-            if a_butter.is_finite()
-                && b_butter.is_finite()
-                && a_bpp > 0.0
-                && b_bpp > 0.0
-            {
+        if let Some(&(_, b_bpp, b_butter)) = b_results.iter().find(|&&(bq, _, _)| bq == q) {
+            if a_butter.is_finite() && b_butter.is_finite() && a_bpp > 0.0 && b_bpp > 0.0 {
                 // Compute efficiency advantage (lower butteraugli/bpp is better)
                 let a_eff = a_butter / a_bpp;
                 let b_eff = b_butter / b_bpp;
@@ -270,11 +264,7 @@ fn print_text_report(results: &mut Vec<ImageResults>, args: &Args) {
     }
 
     // Sort by jpegli advantage (most jpegli-favoring first)
-    results.sort_by(|a, b| {
-        b.jpegli_advantage
-            .partial_cmp(&a.jpegli_advantage)
-            .unwrap()
-    });
+    results.sort_by(|a, b| b.jpegli_advantage.partial_cmp(&a.jpegli_advantage).unwrap());
 
     println!("\n=== Images where JPEGLI wins (top {}) ===\n", args.top_n);
     println!(
@@ -308,10 +298,7 @@ fn print_text_report(results: &mut Vec<ImageResults>, args: &Args) {
         .iter()
         .filter(|r| r.mozjpeg_advantage > 0.05)
         .count();
-    let jpegli_wins = results
-        .iter()
-        .filter(|r| r.jpegli_advantage > 0.05)
-        .count();
+    let jpegli_wins = results.iter().filter(|r| r.jpegli_advantage > 0.05).count();
     let ties = results.len() - moz_wins - jpegli_wins;
 
     println!("\n=== Summary ===\n");
