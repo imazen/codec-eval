@@ -1,13 +1,14 @@
 //! XYB color space roundtrip for fair metric comparison.
 //!
-//! When comparing compressed images to originals, the original should first be
+//! When comparing compressed images to originals, the original can first be
 //! roundtripped through XYB color space (RGB → XYB → RGB) to isolate true
 //! compression error from color space conversion error.
 //!
-//! This is especially important when evaluating codecs that operate in XYB
-//! color space internally (like jpegli). The XYB color space uses an opsin
-//! absorbance matrix that isn't perfectly invertible, leading to some loss
-//! even before any compression happens.
+//! **Note:** With butteraugli-oxide's XYB implementation, the roundtrip is
+//! **lossless** for all 16.7 million possible RGB colors. This means the
+//! XYB roundtrip option is effectively a no-op with the current implementation.
+//! However, it may be useful for comparing against codecs that use a different
+//! (lossy) XYB implementation internally.
 
 use butteraugli_oxide::xyb;
 
@@ -24,9 +25,11 @@ use butteraugli_oxide::xyb;
 /// 3. XYB → Linear RGB (f32)
 /// 4. Linear RGB → sRGB (u8)
 ///
-/// The conversion loss comes from:
-/// - sRGB to linear conversion and back (u8 quantization at each end)
-/// - XYB opsin matrix and its approximate inverse
+/// # Lossless Property
+///
+/// With butteraugli-oxide's implementation, this roundtrip is **lossless**
+/// for all 16.7 million possible RGB colors. The f32 precision is sufficient
+/// to perfectly reconstruct the original u8 values after the round trip.
 ///
 /// # Arguments
 ///
@@ -81,10 +84,9 @@ mod tests {
     }
 
     #[test]
-    fn test_xyb_roundtrip_extreme_colors() {
-        // Test that roundtrip works for all extreme colors
-        // The XYB opsin matrix is designed for perceptual quality, not perfect inversion
-        // butteraugli's own tests allow up to 15 levels of difference for saturated colors
+    fn test_xyb_roundtrip_lossless() {
+        // Verify that XYB roundtrip is lossless for a representative sample
+        // (Full 16.7M color test is in bench_tests below)
         let test_colors = [
             [255u8, 0, 0],     // Red
             [0u8, 255, 0],     // Green
@@ -95,74 +97,39 @@ mod tests {
             [0u8, 0, 0],       // Black
             [255u8, 255, 255], // White
             [128u8, 128, 128], // Gray
+            [200u8, 150, 130], // Skin tone
+            [135u8, 180, 230], // Sky blue
         ];
 
         for color in &test_colors {
             let rgb = vec![color[0], color[1], color[2]];
             let result = xyb_roundtrip(&rgb, 1, 1);
-
-            // Just verify the result is valid u8 values (no panic)
-            // The opsin matrix approximation can cause significant drift for saturated colors
-            // This is expected and documented in butteraugli's xyb.rs
-            assert!(result.len() == 3, "Result should have 3 components");
-
-            // For debugging: print the actual differences
-            let _dr = (result[0] as i16 - color[0] as i16).abs();
-            let _dg = (result[1] as i16 - color[1] as i16).abs();
-            let _db = (result[2] as i16 - color[2] as i16).abs();
-        }
-    }
-
-    #[test]
-    fn test_xyb_roundtrip_black_and_white() {
-        // Black and white should roundtrip well since they're on the achromatic axis
-        let black = [0u8, 0, 0];
-        let white = [255u8, 255, 255];
-
-        let result_black = xyb_roundtrip(&black, 1, 1);
-        let result_white = xyb_roundtrip(&white, 1, 1);
-
-        // Black should stay black (all values close to 0)
-        assert!(result_black[0] < 5, "Black R: {}", result_black[0]);
-        assert!(result_black[1] < 5, "Black G: {}", result_black[1]);
-        assert!(result_black[2] < 5, "Black B: {}", result_black[2]);
-
-        // White should stay white (all values close to 255)
-        assert!(result_white[0] > 250, "White R: {}", result_white[0]);
-        assert!(result_white[1] > 250, "White G: {}", result_white[1]);
-        assert!(result_white[2] > 250, "White B: {}", result_white[2]);
-    }
-
-    #[test]
-    fn test_xyb_roundtrip_typical_photo_colors() {
-        // Test colors typical in photographs (skin tones, sky, grass)
-        // These should have smaller errors than saturated primaries
-        let photo_colors = [
-            [200u8, 150, 130], // Skin tone
-            [135u8, 180, 230], // Sky blue
-            [80u8, 140, 60],   // Grass green
-            [180u8, 120, 80],  // Wood brown
-        ];
-
-        for color in &photo_colors {
-            let rgb = vec![color[0], color[1], color[2]];
-            let result = xyb_roundtrip(&rgb, 1, 1);
-
-            // Photo-realistic colors should roundtrip with smaller error
-            let max_diff = 20; // Allow up to 20 levels for any color
-            let dr = (result[0] as i16 - color[0] as i16).abs();
-            let dg = (result[1] as i16 - color[1] as i16).abs();
-            let db = (result[2] as i16 - color[2] as i16).abs();
-
-            assert!(
-                dr <= max_diff && dg <= max_diff && db <= max_diff,
-                "Photo color {:?} → {:?}, diffs: ({}, {}, {})",
-                color,
+            assert_eq!(
                 &result[..],
-                dr,
-                dg,
-                db
+                &rgb[..],
+                "XYB roundtrip should be lossless for {:?}",
+                color
             );
         }
+    }
+
+    /// Exhaustive test: verify lossless roundtrip for ALL 16.7M colors
+    /// Run with: cargo test --release test_xyb_roundtrip_exhaustive
+    #[test]
+    #[ignore] // Takes ~1.5 seconds in release mode
+    fn test_xyb_roundtrip_exhaustive() {
+        let mut failures = 0u64;
+        for r in 0..=255u8 {
+            for g in 0..=255u8 {
+                for b in 0..=255u8 {
+                    let rgb = vec![r, g, b];
+                    let result = xyb_roundtrip(&rgb, 1, 1);
+                    if result[0] != r || result[1] != g || result[2] != b {
+                        failures += 1;
+                    }
+                }
+            }
+        }
+        assert_eq!(failures, 0, "XYB roundtrip should be lossless for all colors");
     }
 }
