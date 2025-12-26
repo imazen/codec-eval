@@ -300,6 +300,7 @@ name = "codec-compare"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "butteraugli-oxide",
  "clap",
  "codec-eval",
  "image",
