@@ -52,7 +52,7 @@ pub use eval::{
     session::{EvalConfig, EvalSession, ImageData},
 };
 pub use import::{CsvImporter, CsvSchema, ExternalResult};
-pub use metrics::{MetricConfig, MetricResult, PerceptionLevel, xyb_roundtrip};
+pub use metrics::{ColorProfile, MetricConfig, MetricResult, PerceptionLevel, xyb_roundtrip};
 pub use stats::{
     ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg,
 };

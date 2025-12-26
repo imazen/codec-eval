@@ -20,6 +20,7 @@ use crate::viewing::ViewingCondition;
 /// Image data accepted by the evaluation session.
 ///
 /// Supports both `imgref::ImgVec` types and raw slices for flexibility.
+/// For decoded images with ICC profiles, use the `WithIcc` variants.
 #[derive(Clone)]
 pub enum ImageData {
     /// RGB8 image using imgref.
@@ -47,6 +48,21 @@ pub enum ImageData {
         /// Image height.
         height: usize,
     },
+
+    /// RGB8 raw slice with ICC profile for color management.
+    ///
+    /// Use this for decoded images that have embedded ICC profiles (e.g., XYB JPEGs).
+    /// The ICC profile will be used to transform pixels to sRGB before metric calculation.
+    RgbSliceWithIcc {
+        /// Pixel data in row-major order.
+        data: Vec<u8>,
+        /// Image width.
+        width: usize,
+        /// Image height.
+        height: usize,
+        /// ICC profile data (raw bytes from the image).
+        icc_profile: Vec<u8>,
+    },
 }
 
 impl ImageData {
@@ -56,8 +72,9 @@ impl ImageData {
         match self {
             Self::Rgb8(img) => img.width(),
             Self::Rgba8(img) => img.width(),
-            Self::RgbSlice { width, .. } => *width,
-            Self::RgbaSlice { width, .. } => *width,
+            Self::RgbSlice { width, .. }
+            | Self::RgbaSlice { width, .. }
+            | Self::RgbSliceWithIcc { width, .. } => *width,
         }
     }
 
@@ -67,18 +84,22 @@ impl ImageData {
         match self {
             Self::Rgb8(img) => img.height(),
             Self::Rgba8(img) => img.height(),
-            Self::RgbSlice { height, .. } => *height,
-            Self::RgbaSlice { height, .. } => *height,
+            Self::RgbSlice { height, .. }
+            | Self::RgbaSlice { height, .. }
+            | Self::RgbSliceWithIcc { height, .. } => *height,
         }
     }
 
     /// Convert to RGB8 slice representation.
+    ///
+    /// Note: This does NOT apply ICC profile transformation. For ICC-aware
+    /// conversion, use [`to_rgb8_srgb()`] instead.
     #[must_use]
     pub fn to_rgb8_vec(&self) -> Vec<u8> {
         match self {
             Self::Rgb8(img) => img.pixels().flat_map(|p| [p.r, p.g, p.b]).collect(),
             Self::Rgba8(img) => img.pixels().flat_map(|p| [p.r, p.g, p.b]).collect(),
-            Self::RgbSlice { data, .. } => data.clone(),
+            Self::RgbSlice { data, .. } | Self::RgbSliceWithIcc { data, .. } => data.clone(),
             Self::RgbaSlice {
                 data,
                 width,
@@ -93,6 +114,36 @@ impl ImageData {
                 rgb
             }
         }
+    }
+
+    /// Get the ICC profile if present.
+    #[must_use]
+    pub fn icc_profile(&self) -> Option<&[u8]> {
+        match self {
+            Self::RgbSliceWithIcc { icc_profile, .. } => Some(icc_profile),
+            _ => None,
+        }
+    }
+
+    /// Get the color profile for this image.
+    #[must_use]
+    pub fn color_profile(&self) -> crate::metrics::ColorProfile {
+        match self {
+            Self::RgbSliceWithIcc { icc_profile, .. } => {
+                crate::metrics::ColorProfile::Icc(icc_profile.clone())
+            }
+            _ => crate::metrics::ColorProfile::Srgb,
+        }
+    }
+
+    /// Convert to sRGB RGB8 slice, applying ICC profile transformation if needed.
+    ///
+    /// This is the ICC-aware version of [`to_rgb8_vec()`]. Use this when you need
+    /// the pixels in sRGB color space for metric calculation.
+    pub fn to_rgb8_srgb(&self) -> crate::error::Result<Vec<u8>> {
+        let rgb = self.to_rgb8_vec();
+        let profile = self.color_profile();
+        crate::metrics::transform_to_srgb(&rgb, &profile)
     }
 }
 
@@ -337,7 +388,10 @@ impl EvalSession {
                     let decoded = decode(&encoded)?;
                     let decode_time = start.elapsed();
 
-                    let decoded_rgb = decoded.to_rgb8_vec();
+                    // Convert decoded pixels to sRGB, applying ICC profile if present.
+                    // This ensures accurate metric calculation for XYB JPEGs and other
+                    // images with embedded ICC profiles.
+                    let decoded_rgb = decoded.to_rgb8_srgb()?;
                     let metrics =
                         self.calculate_metrics(&reference_rgb, &decoded_rgb, width, height)?;
 

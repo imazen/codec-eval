@@ -65,6 +65,7 @@ fn quantize_to_u8(value: f32, min: f32, max: f32) -> f32 {
 ///
 /// Roundtripped RGB8 buffer with the same dimensions.
 #[must_use]
+#[allow(clippy::many_single_char_names)] // r, g, b, x, y are standard color channel names
 pub fn xyb_roundtrip(rgb: &[u8], width: usize, height: usize) -> Vec<u8> {
     let num_pixels = width * height;
     assert_eq!(rgb.len(), num_pixels * 3, "Buffer size mismatch");

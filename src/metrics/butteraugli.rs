@@ -9,9 +9,14 @@
 //! - < 3.0: Subtle difference
 //! - < 5.0: Noticeable difference
 //! - >= 5.0: Degraded
+//!
+//! # ICC Profile Support
+//!
+//! Use [`calculate_butteraugli_icc`] for images with non-sRGB color profiles.
 
 use butteraugli_oxide::{ButteraugliParams, compute_butteraugli};
 
+use super::icc::ColorProfile;
 use crate::error::{Error, Result};
 
 /// Calculate Butteraugli distance between two images.
@@ -117,6 +122,32 @@ pub fn calculate_butteraugli_with_intensity(
     })?;
 
     Ok(result.score)
+}
+
+/// Calculate Butteraugli with ICC profile support.
+///
+/// This function transforms both images to sRGB before comparison.
+///
+/// # Arguments
+///
+/// * `reference` - Reference image as RGB8 pixel data.
+/// * `reference_profile` - Color profile of the reference image.
+/// * `test` - Test image as RGB8 pixel data.
+/// * `test_profile` - Color profile of the test image.
+/// * `width` - Image width in pixels.
+/// * `height` - Image height in pixels.
+pub fn calculate_butteraugli_icc(
+    reference: &[u8],
+    reference_profile: &ColorProfile,
+    test: &[u8],
+    test_profile: &ColorProfile,
+    width: usize,
+    height: usize,
+) -> Result<f64> {
+    let (ref_srgb, test_srgb) =
+        super::icc::prepare_for_comparison(reference, reference_profile, test, test_profile)?;
+
+    calculate_butteraugli(&ref_srgb, &test_srgb, width, height)
 }
 
 #[cfg(test)]

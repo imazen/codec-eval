@@ -24,6 +24,8 @@ rayon = "1.10"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive", "env"] }
 tempfile = "3"
+# ICC color management - moxcms is pure Rust and closest to libjxl's skcms
+moxcms = { version = "0.7", features = ["options"] }
 
 [package]
 name = "codec-eval"
@@ -33,6 +35,11 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "Image codec comparison and evaluation library"
+
+[features]
+default = ["icc"]
+# Enable ICC color profile support using moxcms (pure Rust, closest to libjxl's skcms)
+icc = ["moxcms"]
 
 [dependencies]
 thiserror.workspace = true
@@ -46,6 +53,8 @@ ssimulacra2.workspace = true
 butteraugli-oxide.workspace = true
 rayon.workspace = true
 chrono.workspace = true
+# Optional ICC support
+moxcms = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -22,3 +22,5 @@ target
 codec-corpus/
 benchmarks/
 external/
+test_output/
+comparison_outputs/

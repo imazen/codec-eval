@@ -10,11 +10,23 @@
 //! - > 70: Subtle difference
 //! - > 50: Noticeable difference
 //! - <= 50: Degraded
+//!
+//! # ICC Profile Support
+//!
+//! When comparing images with embedded ICC profiles, use [`calculate_ssimulacra2_icc`]
+//! to ensure accurate color space conversion before comparison. This is critical for:
+//!
+//! - XYB JPEGs from jpegli (which embed custom ICC profiles)
+//! - Wide-gamut images (Display P3, Rec.2020)
+//! - Any image with non-sRGB color space
+//!
+//! Without proper ICC handling, scores can be off by 1-2 points at high quality levels.
 
 use ssimulacra2::{
     ColorPrimaries, Rgb as Ssim2Rgb, TransferCharacteristic, compute_frame_ssimulacra2,
 };
 
+use super::icc::ColorProfile;
 use crate::error::{Error, Result};
 
 /// Calculate SSIMULACRA2 between two images.
@@ -109,6 +121,53 @@ pub fn calculate_ssimulacra2(
         metric: "SSIMULACRA2".to_string(),
         reason: format!("Failed to compute SSIMULACRA2: {e}"),
     })
+}
+
+/// Calculate SSIMULACRA2 with ICC profile support.
+///
+/// This function transforms both images to sRGB before comparison, ensuring
+/// accurate results even when images have non-sRGB color profiles.
+///
+/// # Arguments
+///
+/// * `reference` - Reference image as RGB8 pixel data.
+/// * `reference_profile` - Color profile of the reference image.
+/// * `test` - Test image as RGB8 pixel data.
+/// * `test_profile` - Color profile of the test image.
+/// * `width` - Image width in pixels.
+/// * `height` - Image height in pixels.
+///
+/// # Returns
+///
+/// SSIMULACRA2 score where higher is better (100 = identical).
+///
+/// # Example
+///
+/// ```ignore
+/// use codec_eval::metrics::{ssimulacra2::calculate_ssimulacra2_icc, ColorProfile};
+///
+/// // For XYB JPEG with embedded ICC profile
+/// let score = calculate_ssimulacra2_icc(
+///     &reference_rgb,
+///     &ColorProfile::Srgb,
+///     &decoded_jpeg_rgb,
+///     &ColorProfile::Icc(jpeg_icc_data),
+///     width,
+///     height,
+/// )?;
+/// ```
+pub fn calculate_ssimulacra2_icc(
+    reference: &[u8],
+    reference_profile: &ColorProfile,
+    test: &[u8],
+    test_profile: &ColorProfile,
+    width: usize,
+    height: usize,
+) -> Result<f64> {
+    let (ref_srgb, test_srgb) =
+        super::icc::prepare_for_comparison(reference, reference_profile, test, test_profile)?;
+
+    calculate_ssimulacra2(&ref_srgb, &test_srgb, width, height)
 }
 
 #[cfg(test)]

@@ -1,11 +1,16 @@
 //! DSSIM (Structural Dissimilarity) metric calculation.
 //!
 //! Wraps the `dssim-core` crate for perceptual image comparison.
+//!
+//! # ICC Profile Support
+//!
+//! Use [`calculate_dssim_icc`] for images with non-sRGB color profiles.
 
 use dssim_core::Dssim;
 use imgref::ImgVec;
 use rgb::RGBA;
 
+use super::icc::ColorProfile;
 use crate::error::{Error, Result};
 use crate::viewing::ViewingCondition;
 
@@ -115,6 +120,37 @@ pub fn rgba8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<
         .collect();
 
     ImgVec::new(pixels, width, height)
+}
+
+/// Calculate DSSIM with ICC profile support.
+///
+/// This function transforms both images to sRGB before comparison.
+///
+/// # Arguments
+///
+/// * `reference` - Reference image as RGB8 pixel data.
+/// * `reference_profile` - Color profile of the reference image.
+/// * `test` - Test image as RGB8 pixel data.
+/// * `test_profile` - Color profile of the test image.
+/// * `width` - Image width in pixels.
+/// * `height` - Image height in pixels.
+/// * `viewing` - Viewing condition for PPD-based adjustment.
+pub fn calculate_dssim_icc(
+    reference: &[u8],
+    reference_profile: &ColorProfile,
+    test: &[u8],
+    test_profile: &ColorProfile,
+    width: usize,
+    height: usize,
+    viewing: &ViewingCondition,
+) -> Result<f64> {
+    let (ref_srgb, test_srgb) =
+        super::icc::prepare_for_comparison(reference, reference_profile, test, test_profile)?;
+
+    let ref_img = rgb8_to_dssim_image(&ref_srgb, width, height);
+    let test_img = rgb8_to_dssim_image(&test_srgb, width, height);
+
+    calculate_dssim(&ref_img, &test_img, viewing)
 }
 
 #[cfg(test)]

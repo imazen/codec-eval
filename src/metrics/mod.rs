@@ -28,8 +28,12 @@
 
 pub mod butteraugli;
 pub mod dssim;
+pub mod icc;
 pub mod ssimulacra2;
 pub mod xyb;
+
+// Re-export ICC types for convenience
+pub use icc::{ColorProfile, prepare_for_comparison, transform_to_srgb};
 
 use serde::{Deserialize, Serialize};
 
