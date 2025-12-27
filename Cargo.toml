@@ -64,6 +64,8 @@ jpeg-decoder = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile.workspace = true
+# For testing ICC profile handling with XYB JPEGs
+jpegli-rs = { path = "../jpegli-rs/jpegli-rs" }
 
 [lints.rust]
 unsafe_code = "warn"
