@@ -133,6 +133,109 @@ impl Corpus {
         discovery::discover_corpus(path.as_ref())
     }
 
+    /// Default corpus repository URL.
+    pub const DEFAULT_CORPUS_URL: &'static str =
+        "https://github.com/AcrossTheCloud/codec-corpus.git";
+
+    /// Discover or download a corpus on demand.
+    ///
+    /// If the path exists, discovers images. If not, clones from the given URL
+    /// (or the default codec-corpus repository) and then discovers.
+    ///
+    /// # Arguments
+    /// * `path` - Local path for the corpus
+    /// * `url` - Optional remote URL (defaults to codec-corpus)
+    /// * `subsets` - Optional list of subsets to download (e.g., ["kodak", "clic2025"])
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// // Download just the kodak test set
+    /// let corpus = Corpus::discover_or_download(
+    ///     "./corpus",
+    ///     None,
+    ///     Some(&["kodak"]),
+    /// )?;
+    /// ```
+    pub fn discover_or_download(
+        path: impl AsRef<Path>,
+        url: Option<&str>,
+        subsets: Option<&[&str]>,
+    ) -> Result<Self> {
+        let path = path.as_ref();
+        let url = url.unwrap_or(Self::DEFAULT_CORPUS_URL);
+
+        // If path exists and has images, just discover
+        if path.exists() && path.is_dir() {
+            // Check if it has any image files
+            if has_image_files(path) {
+                return Self::discover(path);
+            }
+        }
+
+        // Need to download
+        eprintln!("Corpus not found at {}, downloading from {}", path.display(), url);
+
+        // Use sparse checkout for efficiency
+        let sparse = if let Some(subsets) = subsets {
+            let checkout = SparseCheckout::clone_shallow(url, path, 1)?;
+            // Add subset directories
+            let paths: Vec<&str> = subsets.iter().copied().collect();
+            checkout.add_paths(&paths)?;
+            checkout.checkout()?;
+            checkout
+        } else {
+            // Clone everything (but still use sparse for efficiency)
+            let checkout = SparseCheckout::clone_shallow(url, path, 1)?;
+            checkout.set_paths(&["*"])?;
+            checkout.checkout()?;
+            checkout
+        };
+
+        eprintln!("Downloaded corpus to {}", sparse.path().display());
+
+        // Now discover
+        Self::discover(path)
+    }
+
+    /// Download a specific subset of the corpus.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let corpus = Corpus::download_subset("./corpus", "kodak")?;
+    /// ```
+    pub fn download_subset(path: impl AsRef<Path>, subset: &str) -> Result<Self> {
+        Self::discover_or_download(path, None, Some(&[subset]))
+    }
+
+    /// Get corpus, downloading if necessary. Returns cached corpus if available.
+    ///
+    /// Checks common locations for existing corpus before downloading:
+    /// 1. The specified path
+    /// 2. ./codec-corpus
+    /// 3. ../codec-corpus
+    /// 4. ../codec-comparison/codec-corpus
+    pub fn get_or_download(preferred_path: impl AsRef<Path>) -> Result<Self> {
+        let preferred = preferred_path.as_ref();
+
+        // Check common locations
+        let candidates = [
+            preferred.to_path_buf(),
+            PathBuf::from("./codec-corpus"),
+            PathBuf::from("../codec-corpus"),
+            PathBuf::from("../codec-comparison/codec-corpus"),
+        ];
+
+        for path in &candidates {
+            if path.exists() && has_image_files(path) {
+                eprintln!("Found corpus at {}", path.display());
+                return Self::discover(path);
+            }
+        }
+
+        // Not found, download to preferred path
+        Self::discover_or_download(preferred, None, None)
+    }
+
     /// Load a corpus from a JSON manifest file.
     pub fn load(path: impl AsRef<Path>) -> Result<Self> {
         let content = std::fs::read_to_string(path.as_ref())?;
@@ -303,6 +406,39 @@ pub struct CorpusStats {
     pub min_height: u32,
     /// Maximum image height.
     pub max_height: u32,
+}
+
+/// Check if a directory contains any image files.
+fn has_image_files(path: &Path) -> bool {
+    const IMAGE_EXTENSIONS: &[&str] = &["png", "jpg", "jpeg", "webp", "avif", "jxl"];
+
+    if let Ok(entries) = std::fs::read_dir(path) {
+        for entry in entries.flatten() {
+            let entry_path = entry.path();
+            if entry_path.is_file() {
+                if let Some(ext) = entry_path.extension().and_then(|e| e.to_str()) {
+                    if IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
+                        return true;
+                    }
+                }
+            } else if entry_path.is_dir() {
+                // Check subdirectories recursively (but only one level deep for performance)
+                if let Ok(sub_entries) = std::fs::read_dir(&entry_path) {
+                    for sub_entry in sub_entries.flatten() {
+                        let sub_path = sub_entry.path();
+                        if sub_path.is_file() {
+                            if let Some(ext) = sub_path.extension().and_then(|e| e.to_str()) {
+                                if IMAGE_EXTENSIONS.contains(&ext.to_lowercase().as_str()) {
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    false
 }
 
 #[cfg(test)]
