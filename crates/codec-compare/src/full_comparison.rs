@@ -75,19 +75,19 @@ fn encode_mozjpeg(_: &[u8], _: usize, _: usize, _: u8) -> Option<Vec<u8>> {
     None
 }
 
-/// Encode with jpegli
+/// Encode with jpegli (YCbCr mode)
 #[cfg(feature = "jpegli")]
 fn encode_jpegli(rgb: &[u8], width: usize, height: usize, quality: u8) -> Option<Vec<u8>> {
-    use jpegli::{ColorSpace, Compress};
+    use jpegli::encode::Encoder;
+    use jpegli::quant::Quality;
 
     std::panic::catch_unwind(|| -> Option<Vec<u8>> {
-        let mut comp = Compress::new(ColorSpace::JCS_RGB);
-        comp.set_size(width, height);
-        comp.set_quality(quality as f32);
+        let encoder = Encoder::new()
+            .width(width as u32)
+            .height(height as u32)
+            .quality(Quality::from_quality(quality as f32));
 
-        let mut comp = comp.start_compress(Vec::new()).ok()?;
-        comp.write_scanlines(rgb).ok()?;
-        comp.finish().ok()
+        encoder.encode(rgb).ok()
     })
     .ok()
     .flatten()
@@ -98,10 +98,53 @@ fn encode_jpegli(_: &[u8], _: usize, _: usize, _: u8) -> Option<Vec<u8>> {
     None
 }
 
-/// Decode JPEG to RGB
+/// Encode with jpegli in XYB color space mode
+#[cfg(feature = "jpegli")]
+fn encode_jpegli_xyb(rgb: &[u8], width: usize, height: usize, quality: u8) -> Option<Vec<u8>> {
+    use jpegli::encode::Encoder;
+    use jpegli::quant::Quality;
+
+    std::panic::catch_unwind(|| -> Option<Vec<u8>> {
+        let encoder = Encoder::new()
+            .width(width as u32)
+            .height(height as u32)
+            .quality(Quality::from_quality(quality as f32))
+            .use_xyb(true);
+
+        encoder.encode(rgb).ok()
+    })
+    .ok()
+    .flatten()
+}
+
+#[cfg(not(feature = "jpegli"))]
+fn encode_jpegli_xyb(_: &[u8], _: usize, _: usize, _: u8) -> Option<Vec<u8>> {
+    None
+}
+
+/// Decode JPEG to RGB (standard decoder, no ICC handling)
 fn decode_jpeg(data: &[u8]) -> Option<Vec<u8>> {
     let img = image::load_from_memory_with_format(data, image::ImageFormat::Jpeg).ok()?;
     Some(img.to_rgb8().into_raw())
+}
+
+/// Decode JPEG with ICC profile handling (required for XYB mode)
+#[cfg(feature = "jpegli")]
+fn decode_jpeg_with_icc(data: &[u8]) -> Option<Vec<u8>> {
+    std::panic::catch_unwind(|| -> Option<Vec<u8>> {
+        // Use the icc module which uses jpeg-decoder internally
+        // The Decoder::new().apply_icc(true) approach has bugs with XYB streams
+        jpegli::icc::decode_jpeg_with_icc(data)
+            .ok()
+            .map(|(pixels, _, _)| pixels)
+    })
+    .ok()
+    .flatten()
+}
+
+#[cfg(not(feature = "jpegli"))]
+fn decode_jpeg_with_icc(data: &[u8]) -> Option<Vec<u8>> {
+    decode_jpeg(data)
 }
 
 /// Compute all quality metrics
@@ -189,7 +232,7 @@ fn process_image(path: &Path, qualities: &[u8]) -> Vec<EncodeResult> {
             }
         }
 
-        // jpegli
+        // jpegli (YCbCr mode)
         if let Some(encoded) = encode_jpegli(&rgb, width, height, quality) {
             if let Some(decoded) = decode_jpeg(&encoded) {
                 let (butteraugli, dssim, ssimulacra2) =
@@ -198,6 +241,28 @@ fn process_image(path: &Path, qualities: &[u8]) -> Vec<EncodeResult> {
                 results.push(EncodeResult {
                     image: image_name.clone(),
                     encoder: "jpegli".to_string(),
+                    quality,
+                    width,
+                    height,
+                    file_size: encoded.len(),
+                    bpp,
+                    butteraugli,
+                    dssim,
+                    ssimulacra2,
+                });
+            }
+        }
+
+        // jpegli-xyb (XYB color space mode)
+        if let Some(encoded) = encode_jpegli_xyb(&rgb, width, height, quality) {
+            // XYB JPEGs require ICC-aware decoding
+            if let Some(decoded) = decode_jpeg_with_icc(&encoded) {
+                let (butteraugli, dssim, ssimulacra2) =
+                    compute_metrics(&rgb, &decoded, width, height);
+                let bpp = (encoded.len() as f64 * 8.0) / (width * height) as f64;
+                results.push(EncodeResult {
+                    image: image_name.clone(),
+                    encoder: "jpegli-xyb".to_string(),
                     quality,
                     width,
                     height,
@@ -243,10 +308,10 @@ fn main() -> Result<()> {
 
     println!("Found {} images", images.len());
     println!(
-        "Total encodes: {} (images) x {} (qualities) x 2 (encoders) = {}\n",
+        "Total encodes: {} (images) x {} (qualities) x 3 (encoders) = {}\n",
         images.len(),
         qualities.len(),
-        images.len() * qualities.len() * 2
+        images.len() * qualities.len() * 3
     );
 
     // Process images in parallel

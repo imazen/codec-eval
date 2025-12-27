@@ -59,7 +59,8 @@ ssimulacra2.workspace = true
 
 # JPEG encoders
 mozjpeg = { version = "0.10", optional = true }
-jpegli = { version = "0.1", optional = true }
+# Use local jpegli-rs with XYB support and ICC profile handling
+jpegli = { package = "jpegli-rs", path = "../../../jpegli-rs/jpegli-rs", features = ["cms-lcms2"], optional = true }
 
 # WebP encoder
 webp = { version = "0.3", optional = true }

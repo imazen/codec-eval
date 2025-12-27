@@ -141,20 +141,20 @@ impl CodecImpl for JpegliCodec {
 
 #[cfg(feature = "jpegli")]
 fn encode_jpegli(image: &ImageData, quality: f64) -> codec_eval::error::Result<Vec<u8>> {
-    use jpegli::{ColorSpace, Compress};
+    use jpegli::encode::Encoder;
+    use jpegli::quant::Quality;
 
     let width = image.width();
     let height = image.height();
     let rgb_data = image.to_rgb8_vec();
 
-    std::panic::catch_unwind(|| -> std::io::Result<Vec<u8>> {
-        let mut comp = Compress::new(ColorSpace::JCS_RGB);
-        comp.set_size(width, height);
-        comp.set_quality(quality as f32);
+    std::panic::catch_unwind(|| {
+        let encoder = Encoder::new()
+            .width(width as u32)
+            .height(height as u32)
+            .quality(Quality::from_quality(quality as f32));
 
-        let mut comp = comp.start_compress(Vec::new())?;
-        comp.write_scanlines(&rgb_data)?;
-        comp.finish()
+        encoder.encode(&rgb_data)
     })
     .map_err(|_| codec_eval::error::Error::Codec {
         codec: "jpegli".to_string(),
@@ -168,29 +168,23 @@ fn encode_jpegli(image: &ImageData, quality: f64) -> codec_eval::error::Result<V
 
 #[cfg(feature = "jpegli")]
 fn decode_jpegli(data: &[u8]) -> codec_eval::error::Result<ImageData> {
-    use jpegli::Decompress;
+    use jpegli::decode::Decoder;
 
-    std::panic::catch_unwind(|| -> std::io::Result<(usize, usize, Vec<u8>)> {
-        let d = Decompress::new_mem(data)?;
-        let width = d.width();
-        let height = d.height();
-        let mut d = d.rgb()?;
-        let pixels = d.read_scanlines::<rgb::RGB8>()?;
-        d.finish()?;
-        // Convert Vec<RGB8> to Vec<u8>
-        let data: Vec<u8> = pixels.into_iter().flat_map(|p| [p.r, p.g, p.b]).collect();
-        Ok((width, height, data))
+    std::panic::catch_unwind(|| {
+        let decoder = Decoder::new();
+        let decoded = decoder.decode(data)?;
+        Ok((decoded.width as usize, decoded.height as usize, decoded.data))
     })
     .map_err(|_| codec_eval::error::Error::Codec {
         codec: "jpegli".to_string(),
         message: "Decompression panicked".to_string(),
     })?
-    .map(|(width, height, data)| ImageData::RgbSlice {
+    .map(|(width, height, data): (usize, usize, Vec<u8>)| ImageData::RgbSlice {
         data,
         width,
         height,
     })
-    .map_err(|e| codec_eval::error::Error::Codec {
+    .map_err(|e: jpegli::error::Error| codec_eval::error::Error::Codec {
         codec: "jpegli".to_string(),
         message: format!("Failed to decode: {}", e),
     })
