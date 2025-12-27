@@ -93,6 +93,8 @@ pub struct FormatSelection {
     pub webp: bool,
     /// Include AVIF (all encoders).
     pub avif: bool,
+    /// Include JPEG XL.
+    pub jpegxl: bool,
 }
 
 impl FormatSelection {
@@ -102,6 +104,7 @@ impl FormatSelection {
             jpeg: true,
             webp: true,
             avif: true,
+            jpegxl: true,
         }
     }
 
@@ -111,15 +114,17 @@ impl FormatSelection {
             jpeg: true,
             webp: false,
             avif: false,
+            jpegxl: false,
         }
     }
 
-    /// Include only next-gen formats (WebP, AVIF).
+    /// Include only next-gen formats (WebP, AVIF, JPEG XL).
     pub fn next_gen() -> Self {
         Self {
             jpeg: false,
             webp: true,
             avif: true,
+            jpegxl: true,
         }
     }
 }
@@ -159,6 +164,9 @@ impl CodecRegistry {
         if self.config.formats.avif {
             self.register_avif();
         }
+        if self.config.formats.jpegxl {
+            self.register_jpegxl();
+        }
     }
 
     /// Register JPEG codecs.
@@ -189,6 +197,14 @@ impl CodecRegistry {
             if codec.is_available() {
                 self.register_codec(Box::new(codec));
             }
+        }
+    }
+
+    /// Register JPEG XL codec.
+    pub fn register_jpegxl(&mut self) {
+        let jpegxl = encoders::jpegxl::JpegxlCodec::new();
+        if jpegxl.is_available() {
+            self.register_codec(Box::new(jpegxl));
         }
     }
 

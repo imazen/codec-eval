@@ -45,6 +45,9 @@ webp = { version = "0.3", optional = true }
 ravif = { version = "0.11", optional = true }
 libavif-image = { version = "0.13", optional = true }
 
+# JPEG XL encoder
+jpegxl-rs = { version = "0.11", optional = true, default-features = false, features = ["vendored"] }
+
 # For Docker execution
 which = "7"
 
@@ -60,9 +63,10 @@ avif = ["ravif"]
 mozjpeg = ["dep:mozjpeg"]
 jpegli = ["dep:jpegli"]
 ravif = ["dep:ravif"]
+jpegxl = ["dep:jpegxl-rs"]
 
 # All encoders
-all = ["jpeg", "webp", "avif"]
+all = ["jpeg", "webp", "avif", "jpegxl"]
 
 # Docker-only mode (no native deps, uses CLI tools)
 docker-only = []

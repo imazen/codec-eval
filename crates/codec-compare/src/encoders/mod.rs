@@ -8,6 +8,7 @@
 
 pub mod avif;
 pub mod jpeg;
+pub mod jpegxl;
 pub mod webp;
 
 use codec_eval::eval::session::{DecodeFn, EncodeFn};
@@ -50,6 +51,9 @@ pub fn codec_color(id: &str) -> &'static str {
         "avif-aom" => "#9b59b6",   // purple
         "avif-rav1e" => "#e67e22", // orange
         "avif-svt" => "#1abc9c",   // teal
+
+        // JPEG XL
+        "jpegxl" => "#f39c12", // golden yellow
 
         // Default
         _ => "#34495e", // dark gray

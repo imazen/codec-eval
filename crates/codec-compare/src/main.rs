@@ -241,6 +241,7 @@ fn parse_formats(s: &str) -> anyhow::Result<FormatSelection> {
         jpeg: false,
         webp: false,
         avif: false,
+        jpegxl: false,
     };
 
     for part in s.split(',') {
@@ -248,7 +249,8 @@ fn parse_formats(s: &str) -> anyhow::Result<FormatSelection> {
             "jpeg" | "jpg" => selection.jpeg = true,
             "webp" => selection.webp = true,
             "avif" => selection.avif = true,
-            other => anyhow::bail!("Unknown format: {}. Use: jpeg, webp, avif", other),
+            "jpegxl" | "jxl" => selection.jpegxl = true,
+            other => anyhow::bail!("Unknown format: {}. Use: jpeg, webp, avif, jpegxl", other),
         }
     }
 

@@ -193,6 +193,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1fbdf580320f38b612e485521afda1ee26d10cc9884efaaa750d383e13e3c5f4"
 
 [[package]]
+name = "byteorder"
+version = "1.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fd0f2584146f6f2ef48085050886acf353beff7305ebd1ae69500e27c67f64b"
+
+[[package]]
 name = "byteorder-lite"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -306,6 +312,7 @@ dependencies = [
  "image",
  "imgref",
  "jpegli",
+ "jpegxl-rs",
  "libavif-image",
  "mozjpeg",
  "ravif",
@@ -399,6 +406,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d0a5c400df2834b80a4c3327b3aad3a4c4cd4de0629063962b03235697506a28"
 
 [[package]]
+name = "crunchy"
+version = "0.2.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
+
+[[package]]
 name = "csv"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -417,6 +430,72 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "704a3c26996a80471189265814dbc2c257598b96b8a7feae2d31ace646bb9782"
 dependencies = [
  "memchr",
+]
+
+[[package]]
+name = "darling"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc7f46116c46ff9ab3eb1597a45688b6715c6e628b5c133e288e709a29bcb4ee"
+dependencies = [
+ "darling_core",
+ "darling_macro",
+]
+
+[[package]]
+name = "darling_core"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0d00b9596d185e565c2207a0b01f8bd1a135483d02d9b7b0a54b11da8d53412e"
+dependencies = [
+ "fnv",
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.20.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fc34b93ccb385b40dc71c6fceac4b2ad23662c7eeb248cf10d529b7e055b6ead"
+dependencies = [
+ "darling_core",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "derive_builder"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "507dfb09ea8b7fa618fcf76e953f4f5e192547945816d5358edffe39f6f94947"
+dependencies = [
+ "derive_builder_macro",
+]
+
+[[package]]
+name = "derive_builder_core"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d5bcf7b024d6835cfb3d473887cd966994907effbe9227e8c8219824d06c4e8"
+dependencies = [
+ "darling",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "derive_builder_macro"
+version = "0.20.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ab63b0e2bf4d5928aff72e83a7dace85d7bba5fe12dcc3c5a572d78caffd3f3c"
+dependencies = [
+ "derive_builder_core",
+ "syn",
 ]
 
 [[package]]
@@ -517,6 +596,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "fnv"
+version = "1.0.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
+
+[[package]]
 name = "getrandom"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -544,6 +629,17 @@ name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
+
+[[package]]
+name = "half"
+version = "2.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6ea2d84b969582b4b1864a92dc5d27cd2b77b622a8d79306834f1be5ba20d84b"
+dependencies = [
+ "cfg-if",
+ "crunchy",
+ "zerocopy",
+]
 
 [[package]]
 name = "hashbrown"
@@ -580,6 +676,12 @@ checksum = "f31827a206f56af32e590ba56d5d2d085f558508192593743f16b2306495269f"
 dependencies = [
  "cc",
 ]
+
+[[package]]
+name = "ident_case"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b9e0384b61958566e926dc50660321d12159025e767c18e043daf26b70104c39"
 
 [[package]]
 name = "image"
@@ -692,6 +794,38 @@ checksum = "1f029b854497dee11f3fd279a23870520f245417adaa882f4310a666a53891a8"
 dependencies = [
  "cmake",
  "libc",
+ "pkg-config",
+]
+
+[[package]]
+name = "jpegxl-rs"
+version = "0.11.2+libjxl-0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "875063ddd0cb50c5668b9c3214152ee54e6ca1f42b662d66c0855f76687033c0"
+dependencies = [
+ "byteorder",
+ "derive_builder",
+ "half",
+ "jpegxl-sys",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "jpegxl-src"
+version = "0.11.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96c328aa9d824459bfb9aef47b8b3defa126df1bbd6fd3a1e59e703911d6dd00"
+dependencies = [
+ "cmake",
+]
+
+[[package]]
+name = "jpegxl-sys"
+version = "0.11.2+libjxl-0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fdaef0388e8220dc89a4ab47f92f942b68dfc237fa2dd3c3881948c5d88ce2f0"
+dependencies = [
+ "jpegxl-src",
  "pkg-config",
 ]
 
