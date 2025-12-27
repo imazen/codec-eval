@@ -441,6 +441,41 @@ fn rule_combined_v21(h: &HeuristicRow, bpp: f64) -> &'static str {
     }
 }
 
+fn rule_combined_v22(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // More aggressive: lower flat threshold, wider bpp range
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Tier 1: Very flat images across wider bpp range
+    if uniformity > 80.0 && complexity < 20.0 && bpp >= 0.3 && bpp < 1.0 {
+        return "mozjpeg";
+    }
+
+    // Tier 2: Flat images in core bpp range
+    if uniformity > 70.0 && complexity < 18.0 && bpp >= 0.4 && bpp < 0.7 {
+        return "mozjpeg";
+    }
+
+    "jpegli"
+}
+
+fn rule_combined_v23(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Even more aggressive
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Score-based approach
+    let moz_score = (uniformity - 65.0).max(0.0) / 35.0
+                  + (25.0 - complexity).max(0.0) / 25.0
+                  + if bpp >= 0.4 && bpp < 0.8 { 0.5 } else { 0.0 };
+
+    if moz_score > 1.5 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
 fn rule_combined_v5(h: &HeuristicRow, bpp: f64) -> &'static str {
     // Focused on the very_flat_low_bpp category
     let uniformity = h.flat_block_pct;
@@ -696,6 +731,8 @@ fn main() -> Result<()> {
         PredictionRule { name: "combined_v19".to_string(), predict: rule_combined_v19 },
         PredictionRule { name: "combined_v20".to_string(), predict: rule_combined_v20 },
         PredictionRule { name: "combined_v21".to_string(), predict: rule_combined_v21 },
+        PredictionRule { name: "combined_v22".to_string(), predict: rule_combined_v22 },
+        PredictionRule { name: "combined_v23".to_string(), predict: rule_combined_v23 },
     ];
 
     // Evaluate each rule
