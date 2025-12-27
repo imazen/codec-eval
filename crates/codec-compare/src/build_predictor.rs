@@ -304,6 +304,143 @@ fn rule_combined_v12(h: &HeuristicRow, bpp: f64) -> &'static str {
     }
 }
 
+fn rule_combined_v13(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Conservative: only predict mozjpeg when very confident
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Very flat, low complexity, 0.35-0.5 bpp is the sweet spot
+    if uniformity > 75.0 && complexity < 20.0 && bpp >= 0.35 && bpp < 0.6 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v14(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Use freq_ratio as additional discriminator
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Low freq_ratio indicates smooth gradients (mozjpeg friendly)
+    if uniformity > 75.0 && complexity < 25.0 && h.freq_ratio < 0.05 && bpp < 0.6 {
+        "mozjpeg"
+    } else if uniformity > 80.0 && bpp < 0.5 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v15(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Combine v5 (best so far) with complexity check
+    let uniformity = h.flat_block_pct;
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+
+    if uniformity > 80.0 && bpp < 0.5 && complexity < 25.0 {
+        "mozjpeg"
+    } else if uniformity > 90.0 && bpp < 0.6 && complexity < 20.0 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v16(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Tune v13: try different thresholds
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Extend BPP range slightly
+    if uniformity > 75.0 && complexity < 22.0 && bpp >= 0.3 && bpp < 0.7 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v17(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Multi-tier approach
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    if bpp >= 0.35 && bpp < 0.5 {
+        // Core mozjpeg territory
+        if uniformity > 70.0 && complexity < 25.0 {
+            "mozjpeg"
+        } else {
+            "jpegli"
+        }
+    } else if bpp >= 0.5 && bpp < 0.7 {
+        // Borderline zone - require higher flatness
+        if uniformity > 80.0 && complexity < 18.0 {
+            "mozjpeg"
+        } else {
+            "jpegli"
+        }
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v18(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Add 0.8 bpp case
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    if uniformity > 75.0 && complexity < 20.0 && bpp >= 0.35 && bpp < 0.6 {
+        "mozjpeg"
+    } else if uniformity > 80.0 && complexity < 15.0 && bpp >= 0.6 && bpp < 0.9 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v19(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Tuned for combined CLIC+Kodak
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    // Very flat images with low complexity at 0.4-0.6 bpp
+    if uniformity > 80.0 && complexity < 18.0 && bpp >= 0.35 && bpp < 0.7 {
+        "mozjpeg"
+    } else if uniformity > 70.0 && complexity < 15.0 && bpp >= 0.4 && bpp < 0.5 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v20(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Focus on the 0.4-0.8 bpp range where mozjpeg can win
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    if bpp >= 0.4 && bpp < 0.9 {
+        // This is the competitive range
+        if uniformity > 75.0 && complexity < 22.0 {
+            "mozjpeg"
+        } else {
+            "jpegli"
+        }
+    } else {
+        "jpegli"
+    }
+}
+
+fn rule_combined_v21(h: &HeuristicRow, bpp: f64) -> &'static str {
+    // Conservative: skip 0.2 bpp entirely
+    let complexity = h.edge_strength_mean + h.local_contrast_mean;
+    let uniformity = h.flat_block_pct;
+
+    if bpp >= 0.3 && bpp < 0.7 && uniformity > 75.0 && complexity < 20.0 {
+        "mozjpeg"
+    } else {
+        "jpegli"
+    }
+}
+
 fn rule_combined_v5(h: &HeuristicRow, bpp: f64) -> &'static str {
     // Focused on the very_flat_low_bpp category
     let uniformity = h.flat_block_pct;
@@ -550,6 +687,15 @@ fn main() -> Result<()> {
         PredictionRule { name: "combined_v10".to_string(), predict: rule_combined_v10 },
         PredictionRule { name: "combined_v11".to_string(), predict: rule_combined_v11 },
         PredictionRule { name: "combined_v12".to_string(), predict: rule_combined_v12 },
+        PredictionRule { name: "combined_v13".to_string(), predict: rule_combined_v13 },
+        PredictionRule { name: "combined_v14".to_string(), predict: rule_combined_v14 },
+        PredictionRule { name: "combined_v15".to_string(), predict: rule_combined_v15 },
+        PredictionRule { name: "combined_v16".to_string(), predict: rule_combined_v16 },
+        PredictionRule { name: "combined_v17".to_string(), predict: rule_combined_v17 },
+        PredictionRule { name: "combined_v18".to_string(), predict: rule_combined_v18 },
+        PredictionRule { name: "combined_v19".to_string(), predict: rule_combined_v19 },
+        PredictionRule { name: "combined_v20".to_string(), predict: rule_combined_v20 },
+        PredictionRule { name: "combined_v21".to_string(), predict: rule_combined_v21 },
     ];
 
     // Evaluate each rule
