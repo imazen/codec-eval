@@ -22,6 +22,7 @@
 
 pub mod compare;
 pub mod encoders;
+pub mod quality_predictor;
 pub mod registry;
 pub mod report;
 
