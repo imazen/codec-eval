@@ -103,6 +103,7 @@ fn parse_heuristics_csv(path: &PathBuf) -> Result<HashMap<String, HeuristicRow>>
 /// Returns: (image, bpp_bucket) -> (winner, margin)
 fn determine_winners_bpp_based(
     comparisons: &[ComparisonRow],
+    metric: QualityMetric,
 ) -> HashMap<(String, u8), (String, f64)> {
     let mut winners = HashMap::new();
 
@@ -124,16 +125,29 @@ fn determine_winners_bpp_based(
         jpegli.sort_by(|a, b| a.bpp.partial_cmp(&b.bpp).unwrap());
 
         for (i, &target_bpp) in bpp_targets.iter().enumerate() {
-            // Find butteraugli at target BPP via linear interpolation
-            let moz_butteraugli = interpolate_butteraugli(&moz, target_bpp);
-            let jpegli_butteraugli = interpolate_butteraugli(&jpegli, target_bpp);
+            // Find metric value at target BPP via linear interpolation
+            let moz_val = interpolate_metric(&moz, target_bpp, metric);
+            let jpegli_val = interpolate_metric(&jpegli, target_bpp, metric);
 
-            if let (Some(m_ba), Some(j_ba)) = (moz_butteraugli, jpegli_butteraugli) {
-                // Lower butteraugli is better
-                let (winner, margin) = if m_ba < j_ba {
-                    ("mozjpeg".to_string(), (j_ba - m_ba) / j_ba)
+            if let (Some(m_val), Some(j_val)) = (moz_val, jpegli_val) {
+                // Skip if either value is NaN
+                if m_val.is_nan() || j_val.is_nan() {
+                    continue;
+                }
+
+                // Determine winner based on metric direction
+                let (winner, margin) = if metric.is_better(m_val, j_val) {
+                    let margin = match metric {
+                        QualityMetric::Ssimulacra2 => (m_val - j_val) / m_val.max(1.0),
+                        _ => (j_val - m_val) / j_val.max(0.001),
+                    };
+                    ("mozjpeg".to_string(), margin.abs())
                 } else {
-                    ("jpegli".to_string(), (m_ba - j_ba) / m_ba)
+                    let margin = match metric {
+                        QualityMetric::Ssimulacra2 => (j_val - m_val) / j_val.max(1.0),
+                        _ => (m_val - j_val) / m_val.max(0.001),
+                    };
+                    ("jpegli".to_string(), margin.abs())
                 };
                 // Only count as a win if margin is significant (>5%)
                 if margin > 0.05 {
@@ -146,8 +160,42 @@ fn determine_winners_bpp_based(
     winners
 }
 
-/// Interpolate butteraugli score at target BPP
-fn interpolate_butteraugli(rows: &[&&ComparisonRow], target_bpp: f64) -> Option<f64> {
+/// Quality metric to use for winner determination
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum QualityMetric {
+    Butteraugli,  // Lower is better
+    Dssim,        // Lower is better
+    Ssimulacra2,  // Higher is better
+}
+
+impl QualityMetric {
+    fn name(&self) -> &'static str {
+        match self {
+            QualityMetric::Butteraugli => "butteraugli",
+            QualityMetric::Dssim => "dssim",
+            QualityMetric::Ssimulacra2 => "ssimulacra2",
+        }
+    }
+
+    fn get_value(&self, row: &ComparisonRow) -> f64 {
+        match self {
+            QualityMetric::Butteraugli => row.butteraugli,
+            QualityMetric::Dssim => row.dssim,
+            QualityMetric::Ssimulacra2 => row.ssimulacra2,
+        }
+    }
+
+    /// Returns true if `a` is better than `b` for this metric
+    fn is_better(&self, a: f64, b: f64) -> bool {
+        match self {
+            QualityMetric::Butteraugli | QualityMetric::Dssim => a < b, // Lower is better
+            QualityMetric::Ssimulacra2 => a > b, // Higher is better
+        }
+    }
+}
+
+/// Interpolate metric value at target BPP
+fn interpolate_metric(rows: &[&&ComparisonRow], target_bpp: f64, metric: QualityMetric) -> Option<f64> {
     if rows.is_empty() {
         return None;
     }
@@ -165,15 +213,17 @@ fn interpolate_butteraugli(rows: &[&&ComparisonRow], target_bpp: f64) -> Option<
         }
     }
 
+    let get_val = |r: &&ComparisonRow| metric.get_value(r);
+
     match (below, above) {
-        (Some(b), Some(a)) if b.bpp == a.bpp => Some(b.butteraugli),
+        (Some(b), Some(a)) if b.bpp == a.bpp => Some(get_val(&b)),
         (Some(b), Some(a)) => {
             // Linear interpolation
             let t = (target_bpp - b.bpp) / (a.bpp - b.bpp);
-            Some(b.butteraugli + t * (a.butteraugli - b.butteraugli))
+            Some(get_val(&b) + t * (get_val(&a) - get_val(&b)))
         }
-        (Some(b), None) => Some(b.butteraugli), // Extrapolate from below
-        (None, Some(a)) => Some(a.butteraugli), // Extrapolate from above
+        (Some(b), None) => Some(get_val(&b)), // Extrapolate from below
+        (None, Some(a)) => Some(get_val(&a)), // Extrapolate from above
         (None, None) => None,
     }
 }
@@ -676,10 +726,52 @@ fn rule_bpp_only(_h: &HeuristicRow, bpp: f64) -> &'static str {
     }
 }
 
+/// Evaluate rules for a specific metric
+fn evaluate_rules_for_metric(
+    comparisons: &[ComparisonRow],
+    heuristics: &HashMap<String, HeuristicRow>,
+    metric: QualityMetric,
+    rules: &[PredictionRule],
+) -> (HashMap<(String, u8), (String, f64)>, String, f64) {
+    let winners = determine_winners_bpp_based(comparisons, metric);
+
+    let mut best_rule = String::new();
+    let mut best_accuracy = 0.0;
+
+    for rule in rules {
+        let mut correct = 0;
+        let mut total = 0;
+
+        for ((image, bpp_bucket), (actual_winner, _margin)) in &winners {
+            if let Some(h) = heuristics.get(image) {
+                let bpp = bpp_bucket_to_value(*bpp_bucket);
+                let predicted = (rule.predict)(h, bpp);
+                if predicted == actual_winner {
+                    correct += 1;
+                }
+                total += 1;
+            }
+        }
+
+        let accuracy = if total > 0 {
+            100.0 * correct as f64 / total as f64
+        } else {
+            0.0
+        };
+
+        if accuracy > best_accuracy {
+            best_accuracy = accuracy;
+            best_rule = rule.name.clone();
+        }
+    }
+
+    (winners, best_rule, best_accuracy)
+}
+
 fn main() -> Result<()> {
     let args = Args::parse();
 
-    println!("=== Encoder Prediction Model Builder (BPP-based) ===\n");
+    println!("=== Encoder Prediction Model Builder (Multi-Metric) ===\n");
 
     // Load data
     let comparisons = parse_comparison_csv(&args.comparison)?;
@@ -687,20 +779,6 @@ fn main() -> Result<()> {
 
     let heuristics = parse_heuristics_csv(&args.heuristics)?;
     println!("Loaded {} heuristic rows", heuristics.len());
-
-    // Determine actual winners at each BPP level
-    let winners = determine_winners_bpp_based(&comparisons);
-    println!("Determined {} winner decisions\n", winners.len());
-
-    // Count overall wins
-    let moz_total = winners.values().filter(|(w, _)| w == "mozjpeg").count();
-    let jpegli_total = winners.values().filter(|(w, _)| w == "jpegli").count();
-    println!(
-        "Overall wins: mozjpeg={}, jpegli={} ({:.1}% jpegli)\n",
-        moz_total,
-        jpegli_total,
-        100.0 * jpegli_total as f64 / (moz_total + jpegli_total).max(1) as f64
-    );
 
     // Define prediction rules
     let rules: Vec<PredictionRule> = vec![
@@ -735,129 +813,178 @@ fn main() -> Result<()> {
         PredictionRule { name: "combined_v23".to_string(), predict: rule_combined_v23 },
     ];
 
-    // Evaluate each rule
-    println!("{:>20} | {:>10} | {:>10} | {:>10}", "Rule", "Correct", "Total", "Accuracy");
-    println!("{}", "-".repeat(60));
+    // Evaluate for each metric
+    let metrics = [
+        QualityMetric::Butteraugli,
+        QualityMetric::Dssim,
+        QualityMetric::Ssimulacra2,
+    ];
 
-    let mut best_rule = String::new();
-    let mut best_accuracy = 0.0;
+    // Store best rules per metric for summary
+    let mut metric_results: Vec<(QualityMetric, String, f64, usize, usize)> = Vec::new();
 
-    for rule in &rules {
-        let mut correct = 0;
-        let mut total = 0;
+    for metric in &metrics {
+        println!("\n{}", "=".repeat(70));
+        println!("=== Analysis for {} ===", metric.name().to_uppercase());
+        println!("{}\n", "=".repeat(70));
 
-        for ((image, bpp_bucket), (actual_winner, _margin)) in &winners {
+        let winners = determine_winners_bpp_based(&comparisons, *metric);
+
+        // Count overall wins
+        let moz_total = winners.values().filter(|(w, _)| w == "mozjpeg").count();
+        let jpegli_total = winners.values().filter(|(w, _)| w == "jpegli").count();
+        println!(
+            "Overall wins: mozjpeg={}, jpegli={} ({:.1}% jpegli)",
+            moz_total,
+            jpegli_total,
+            100.0 * jpegli_total as f64 / (moz_total + jpegli_total).max(1) as f64
+        );
+        println!("Total comparisons with >5% margin: {}\n", winners.len());
+
+        // Evaluate each rule
+        println!("{:>20} | {:>10} | {:>10} | {:>10}", "Rule", "Correct", "Total", "Accuracy");
+        println!("{}", "-".repeat(60));
+
+        let mut best_rule = String::new();
+        let mut best_accuracy = 0.0;
+
+        for rule in &rules {
+            let mut correct = 0;
+            let mut total = 0;
+
+            for ((image, bpp_bucket), (actual_winner, _margin)) in &winners {
+                if let Some(h) = heuristics.get(image) {
+                    let bpp = bpp_bucket_to_value(*bpp_bucket);
+                    let predicted = (rule.predict)(h, bpp);
+                    if predicted == actual_winner {
+                        correct += 1;
+                    }
+                    total += 1;
+                }
+            }
+
+            let accuracy = if total > 0 {
+                100.0 * correct as f64 / total as f64
+            } else {
+                0.0
+            };
+
+            println!(
+                "{:>20} | {:>10} | {:>10} | {:>9.1}%",
+                rule.name, correct, total, accuracy
+            );
+
+            if accuracy > best_accuracy {
+                best_accuracy = accuracy;
+                best_rule = rule.name.clone();
+            }
+        }
+
+        println!("\nBest rule for {}: {} ({:.1}% accuracy)", metric.name(), best_rule, best_accuracy);
+        metric_results.push((*metric, best_rule.clone(), best_accuracy, moz_total, jpegli_total));
+
+        // Analyze by BPP level
+        println!("\n--- Winners by BPP Level ({}) ---\n", metric.name());
+        println!("{:>8} | {:>12} | {:>12} | {:>12}", "BPP", "mozjpeg wins", "jpegli wins", "% jpegli");
+
+        let bpp_targets = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 3.0];
+        for (i, bpp) in bpp_targets.iter().enumerate() {
+            let bucket_winners: Vec<_> = winners
+                .iter()
+                .filter(|((_, b), _)| *b == i as u8)
+                .collect();
+
+            let moz_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "mozjpeg").count();
+            let jpegli_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "jpegli").count();
+            let total = moz_wins + jpegli_wins;
+            let pct_jpegli = if total > 0 {
+                100.0 * jpegli_wins as f64 / total as f64
+            } else {
+                0.0
+            };
+
+            println!(
+                "{:>8.1} | {:>12} | {:>12} | {:>11.1}%",
+                bpp, moz_wins, jpegli_wins, pct_jpegli
+            );
+        }
+
+        // Analyze by image characteristics
+        println!("\n--- Winner Analysis by Image Type ({}) ---\n", metric.name());
+
+        // Group images by flat_block_pct
+        let mut flat_analysis: HashMap<&str, (usize, usize)> = HashMap::new();
+        for ((image, bpp_bucket), (winner, _)) in &winners {
             if let Some(h) = heuristics.get(image) {
                 let bpp = bpp_bucket_to_value(*bpp_bucket);
-                let predicted = (rule.predict)(h, bpp);
-                if predicted == actual_winner {
-                    correct += 1;
+                let category = if h.flat_block_pct > 80.0 {
+                    "very_flat"
+                } else if h.flat_block_pct > 60.0 {
+                    "flat"
+                } else if h.flat_block_pct > 40.0 {
+                    "mixed"
+                } else {
+                    "complex"
+                };
+
+                let key = if bpp < 0.6 {
+                    match category {
+                        "very_flat" => "very_flat_low_bpp",
+                        "flat" => "flat_low_bpp",
+                        "mixed" => "mixed_low_bpp",
+                        _ => "complex_low_bpp",
+                    }
+                } else {
+                    match category {
+                        "very_flat" => "very_flat_high_bpp",
+                        "flat" => "flat_high_bpp",
+                        "mixed" => "mixed_high_bpp",
+                        _ => "complex_high_bpp",
+                    }
+                };
+
+                let entry = flat_analysis.entry(key).or_insert((0, 0));
+                if winner == "mozjpeg" {
+                    entry.0 += 1;
+                } else {
+                    entry.1 += 1;
                 }
-                total += 1;
             }
         }
 
-        let accuracy = if total > 0 {
-            100.0 * correct as f64 / total as f64
-        } else {
-            0.0
-        };
-
-        println!(
-            "{:>20} | {:>10} | {:>10} | {:>9.1}%",
-            rule.name, correct, total, accuracy
-        );
-
-        if accuracy > best_accuracy {
-            best_accuracy = accuracy;
-            best_rule = rule.name.clone();
+        println!("{:>25} | {:>8} | {:>8} | {:>10}", "Category", "mozjpeg", "jpegli", "% jpegli");
+        println!("{}", "-".repeat(60));
+        let mut categories: Vec<_> = flat_analysis.keys().collect();
+        categories.sort();
+        for cat in categories {
+            let (moz, jpegli) = flat_analysis[cat];
+            let total = moz + jpegli;
+            let pct = if total > 0 { 100.0 * jpegli as f64 / total as f64 } else { 0.0 };
+            println!("{:>25} | {:>8} | {:>8} | {:>9.1}%", cat, moz, jpegli, pct);
         }
+    } // End of metric loop
+
+    // Print summary across all metrics
+    println!("\n{}", "=".repeat(70));
+    println!("=== SUMMARY: Best Rules by Metric ===");
+    println!("{}\n", "=".repeat(70));
+
+    println!("{:>15} | {:>20} | {:>10} | {:>15} | {:>15}",
+             "Metric", "Best Rule", "Accuracy", "mozjpeg wins", "jpegli wins");
+    println!("{}", "-".repeat(85));
+
+    for (metric, best_rule, accuracy, moz_wins, jpegli_wins) in &metric_results {
+        println!("{:>15} | {:>20} | {:>9.1}% | {:>15} | {:>15}",
+                 metric.name(), best_rule, accuracy, moz_wins, jpegli_wins);
     }
 
-    println!("\nBest rule: {} ({:.1}% accuracy)", best_rule, best_accuracy);
-
-    // Analyze by BPP level
-    println!("\n=== Winners by BPP Level ===\n");
-    println!("{:>8} | {:>12} | {:>12} | {:>12}", "BPP", "mozjpeg wins", "jpegli wins", "% jpegli");
-
-    let bpp_targets = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 3.0];
-    for (i, bpp) in bpp_targets.iter().enumerate() {
-        let bucket_winners: Vec<_> = winners
-            .iter()
-            .filter(|((_, b), _)| *b == i as u8)
-            .collect();
-
-        let moz_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "mozjpeg").count();
-        let jpegli_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "jpegli").count();
-        let total = moz_wins + jpegli_wins;
-        let pct_jpegli = if total > 0 {
-            100.0 * jpegli_wins as f64 / total as f64
-        } else {
-            0.0
-        };
-
-        println!(
-            "{:>8.1} | {:>12} | {:>12} | {:>11.1}%",
-            bpp, moz_wins, jpegli_wins, pct_jpegli
-        );
-    }
-
-    // Analyze by image characteristics
-    println!("\n=== Winner Analysis by Image Type ===\n");
-
-    // Group images by flat_block_pct
-    let mut flat_analysis: HashMap<&str, (usize, usize)> = HashMap::new();
-    for ((image, bpp_bucket), (winner, _)) in &winners {
-        if let Some(h) = heuristics.get(image) {
-            let bpp = bpp_bucket_to_value(*bpp_bucket);
-            let category = if h.flat_block_pct > 80.0 {
-                "very_flat"
-            } else if h.flat_block_pct > 60.0 {
-                "flat"
-            } else if h.flat_block_pct > 40.0 {
-                "mixed"
-            } else {
-                "complex"
-            };
-
-            let key = if bpp < 0.6 {
-                match category {
-                    "very_flat" => "very_flat_low_bpp",
-                    "flat" => "flat_low_bpp",
-                    "mixed" => "mixed_low_bpp",
-                    _ => "complex_low_bpp",
-                }
-            } else {
-                match category {
-                    "very_flat" => "very_flat_high_bpp",
-                    "flat" => "flat_high_bpp",
-                    "mixed" => "mixed_high_bpp",
-                    _ => "complex_high_bpp",
-                }
-            };
-
-            let entry = flat_analysis.entry(key).or_insert((0, 0));
-            if winner == "mozjpeg" {
-                entry.0 += 1;
-            } else {
-                entry.1 += 1;
-            }
-        }
-    }
-
-    println!("{:>25} | {:>8} | {:>8} | {:>10}", "Category", "mozjpeg", "jpegli", "% jpegli");
-    println!("{}", "-".repeat(60));
-    let mut categories: Vec<_> = flat_analysis.keys().collect();
-    categories.sort();
-    for cat in categories {
-        let (moz, jpegli) = flat_analysis[cat];
-        let total = moz + jpegli;
-        let pct = if total > 0 { 100.0 * jpegli as f64 / total as f64 } else { 0.0 };
-        println!("{:>25} | {:>8} | {:>8} | {:>9.1}%", cat, moz, jpegli, pct);
-    }
-
-    // Write detailed predictions using best rule
-    let best_predict = rules.iter().find(|r| r.name == best_rule).map(|r| r.predict);
+    // Write detailed predictions for butteraugli (primary metric) using best rule
+    let butteraugli_winners = determine_winners_bpp_based(&comparisons, QualityMetric::Butteraugli);
+    let butteraugli_best = metric_results.iter()
+        .find(|(m, _, _, _, _)| *m == QualityMetric::Butteraugli)
+        .map(|(_, r, _, _, _)| r.as_str())
+        .unwrap_or("combined_v13");
+    let best_predict = rules.iter().find(|r| r.name == butteraugli_best).map(|r| r.predict);
 
     let mut file = std::fs::File::create(&args.output)?;
     writeln!(
@@ -865,7 +992,7 @@ fn main() -> Result<()> {
         "image,bpp_bucket,target_bpp,actual_winner,margin,predicted,correct"
     )?;
 
-    for ((image, bpp_bucket), (actual_winner, margin)) in &winners {
+    for ((image, bpp_bucket), (actual_winner, margin)) in &butteraugli_winners {
         if let Some(h) = heuristics.get(image) {
             let bpp = bpp_bucket_to_value(*bpp_bucket);
             let predicted = if let Some(pred_fn) = best_predict {
