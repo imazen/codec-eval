@@ -18,6 +18,10 @@ path = "src/find_outliers.rs"
 name = "rd-compare"
 path = "src/rd_compare.rs"
 
+[[bin]]
+name = "analyze-image"
+path = "src/analyze_image.rs"
+
 [dependencies]
 # Core library
 codec-eval = { path = "../.." }
