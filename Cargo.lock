@@ -359,6 +359,7 @@ dependencies = [
  "dssim-core",
  "imgref",
  "jpeg-decoder",
+ "jpegli-rs",
  "moxcms",
  "rayon",
  "rgb",

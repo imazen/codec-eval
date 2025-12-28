@@ -156,7 +156,7 @@ fn compute_metrics(
 ) -> (f64, f64, f64) {
     // Butteraugli
     let butteraugli = {
-        use butteraugli_oxide::{compute_butteraugli, ButteraugliParams};
+        use butteraugli::{ButteraugliParams, compute_butteraugli};
         let params = ButteraugliParams::default();
         compute_butteraugli(original, decoded, width, height, &params)
             .map(|r| r.score)
@@ -172,8 +172,8 @@ fn compute_metrics(
     };
 
     // SSIMULACRA2
-    let ssimulacra2_val = ssimulacra2::calculate_ssimulacra2(original, decoded, width, height)
-        .unwrap_or(f64::NAN);
+    let ssimulacra2_val =
+        ssimulacra2::calculate_ssimulacra2(original, decoded, width, height).unwrap_or(f64::NAN);
 
     (butteraugli, dssim_val, ssimulacra2_val)
 }

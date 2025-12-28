@@ -173,17 +173,23 @@ fn decode_jpegli(data: &[u8]) -> codec_eval::error::Result<ImageData> {
     std::panic::catch_unwind(|| {
         let decoder = Decoder::new();
         let decoded = decoder.decode(data)?;
-        Ok((decoded.width as usize, decoded.height as usize, decoded.data))
+        Ok((
+            decoded.width as usize,
+            decoded.height as usize,
+            decoded.data,
+        ))
     })
     .map_err(|_| codec_eval::error::Error::Codec {
         codec: "jpegli".to_string(),
         message: "Decompression panicked".to_string(),
     })?
-    .map(|(width, height, data): (usize, usize, Vec<u8>)| ImageData::RgbSlice {
-        data,
-        width,
-        height,
-    })
+    .map(
+        |(width, height, data): (usize, usize, Vec<u8>)| ImageData::RgbSlice {
+            data,
+            width,
+            height,
+        },
+    )
     .map_err(|e: jpegli::error::Error| codec_eval::error::Error::Codec {
         codec: "jpegli".to_string(),
         message: format!("Failed to decode: {}", e),

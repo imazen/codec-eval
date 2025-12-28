@@ -163,9 +163,9 @@ fn determine_winners_bpp_based(
 /// Quality metric to use for winner determination
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum QualityMetric {
-    Butteraugli,  // Lower is better
-    Dssim,        // Lower is better
-    Ssimulacra2,  // Higher is better
+    Butteraugli, // Lower is better
+    Dssim,       // Lower is better
+    Ssimulacra2, // Higher is better
 }
 
 impl QualityMetric {
@@ -189,13 +189,17 @@ impl QualityMetric {
     fn is_better(&self, a: f64, b: f64) -> bool {
         match self {
             QualityMetric::Butteraugli | QualityMetric::Dssim => a < b, // Lower is better
-            QualityMetric::Ssimulacra2 => a > b, // Higher is better
+            QualityMetric::Ssimulacra2 => a > b,                        // Higher is better
         }
     }
 }
 
 /// Interpolate metric value at target BPP
-fn interpolate_metric(rows: &[&&ComparisonRow], target_bpp: f64, metric: QualityMetric) -> Option<f64> {
+fn interpolate_metric(
+    rows: &[&&ComparisonRow],
+    target_bpp: f64,
+    metric: QualityMetric,
+) -> Option<f64> {
     if rows.is_empty() {
         return None;
     }
@@ -516,14 +520,10 @@ fn rule_combined_v23(h: &HeuristicRow, bpp: f64) -> &'static str {
 
     // Score-based approach
     let moz_score = (uniformity - 65.0).max(0.0) / 35.0
-                  + (25.0 - complexity).max(0.0) / 25.0
-                  + if bpp >= 0.4 && bpp < 0.8 { 0.5 } else { 0.0 };
+        + (25.0 - complexity).max(0.0) / 25.0
+        + if bpp >= 0.4 && bpp < 0.8 { 0.5 } else { 0.0 };
 
-    if moz_score > 1.5 {
-        "mozjpeg"
-    } else {
-        "jpegli"
-    }
+    if moz_score > 1.5 { "mozjpeg" } else { "jpegli" }
 }
 
 fn rule_combined_v5(h: &HeuristicRow, bpp: f64) -> &'static str {
@@ -586,11 +586,7 @@ fn rule_combined_v9(h: &HeuristicRow, bpp: f64) -> &'static str {
 
     if is_very_flat && very_low_texture {
         // Very flat images: mozjpeg wins up to moderate bpp
-        if bpp < 0.8 {
-            "mozjpeg"
-        } else {
-            "jpegli"
-        }
+        if bpp < 0.8 { "mozjpeg" } else { "jpegli" }
     } else if is_flat && low_texture && bpp < 0.5 {
         // Flat images: mozjpeg wins only at low bpp
         "mozjpeg"
@@ -605,13 +601,13 @@ fn rule_combined_v10(h: &HeuristicRow, bpp: f64) -> &'static str {
 
     // BPP threshold depends on texture level
     let mozjpeg_bpp_threshold = if texture < 15.0 {
-        1.0  // Very low texture: mozjpeg good up to 1.0 bpp
+        1.0 // Very low texture: mozjpeg good up to 1.0 bpp
     } else if texture < 25.0 {
-        0.6  // Low texture: mozjpeg good up to 0.6 bpp
+        0.6 // Low texture: mozjpeg good up to 0.6 bpp
     } else if texture < 35.0 {
-        0.4  // Medium texture: mozjpeg only at 0.4 bpp
+        0.4 // Medium texture: mozjpeg only at 0.4 bpp
     } else {
-        0.0  // High texture: always jpegli
+        0.0 // High texture: always jpegli
     };
 
     if bpp < mozjpeg_bpp_threshold && h.flat_block_pct > 50.0 {
@@ -719,11 +715,7 @@ fn rule_always_jpegli(_h: &HeuristicRow, _bpp: f64) -> &'static str {
 }
 
 fn rule_bpp_only(_h: &HeuristicRow, bpp: f64) -> &'static str {
-    if bpp < 0.5 {
-        "mozjpeg"
-    } else {
-        "jpegli"
-    }
+    if bpp < 0.5 { "mozjpeg" } else { "jpegli" }
 }
 
 /// Evaluate rules for a specific metric
@@ -782,35 +774,122 @@ fn main() -> Result<()> {
 
     // Define prediction rules
     let rules: Vec<PredictionRule> = vec![
-        PredictionRule { name: "always_jpegli".to_string(), predict: rule_always_jpegli },
-        PredictionRule { name: "bpp_only".to_string(), predict: rule_bpp_only },
-        PredictionRule { name: "flat_based".to_string(), predict: rule_flat_based },
-        PredictionRule { name: "edge_based".to_string(), predict: rule_edge_based },
-        PredictionRule { name: "detail_based".to_string(), predict: rule_detail_based },
-        PredictionRule { name: "freq_based".to_string(), predict: rule_freq_based },
-        PredictionRule { name: "combined_v1".to_string(), predict: rule_combined_v1 },
-        PredictionRule { name: "combined_v2".to_string(), predict: rule_combined_v2 },
-        PredictionRule { name: "combined_v3".to_string(), predict: rule_combined_v3 },
-        PredictionRule { name: "combined_v4".to_string(), predict: rule_combined_v4 },
-        PredictionRule { name: "combined_v5".to_string(), predict: rule_combined_v5 },
-        PredictionRule { name: "combined_v6".to_string(), predict: rule_combined_v6 },
-        PredictionRule { name: "combined_v7".to_string(), predict: rule_combined_v7 },
-        PredictionRule { name: "combined_v8".to_string(), predict: rule_combined_v8 },
-        PredictionRule { name: "combined_v9".to_string(), predict: rule_combined_v9 },
-        PredictionRule { name: "combined_v10".to_string(), predict: rule_combined_v10 },
-        PredictionRule { name: "combined_v11".to_string(), predict: rule_combined_v11 },
-        PredictionRule { name: "combined_v12".to_string(), predict: rule_combined_v12 },
-        PredictionRule { name: "combined_v13".to_string(), predict: rule_combined_v13 },
-        PredictionRule { name: "combined_v14".to_string(), predict: rule_combined_v14 },
-        PredictionRule { name: "combined_v15".to_string(), predict: rule_combined_v15 },
-        PredictionRule { name: "combined_v16".to_string(), predict: rule_combined_v16 },
-        PredictionRule { name: "combined_v17".to_string(), predict: rule_combined_v17 },
-        PredictionRule { name: "combined_v18".to_string(), predict: rule_combined_v18 },
-        PredictionRule { name: "combined_v19".to_string(), predict: rule_combined_v19 },
-        PredictionRule { name: "combined_v20".to_string(), predict: rule_combined_v20 },
-        PredictionRule { name: "combined_v21".to_string(), predict: rule_combined_v21 },
-        PredictionRule { name: "combined_v22".to_string(), predict: rule_combined_v22 },
-        PredictionRule { name: "combined_v23".to_string(), predict: rule_combined_v23 },
+        PredictionRule {
+            name: "always_jpegli".to_string(),
+            predict: rule_always_jpegli,
+        },
+        PredictionRule {
+            name: "bpp_only".to_string(),
+            predict: rule_bpp_only,
+        },
+        PredictionRule {
+            name: "flat_based".to_string(),
+            predict: rule_flat_based,
+        },
+        PredictionRule {
+            name: "edge_based".to_string(),
+            predict: rule_edge_based,
+        },
+        PredictionRule {
+            name: "detail_based".to_string(),
+            predict: rule_detail_based,
+        },
+        PredictionRule {
+            name: "freq_based".to_string(),
+            predict: rule_freq_based,
+        },
+        PredictionRule {
+            name: "combined_v1".to_string(),
+            predict: rule_combined_v1,
+        },
+        PredictionRule {
+            name: "combined_v2".to_string(),
+            predict: rule_combined_v2,
+        },
+        PredictionRule {
+            name: "combined_v3".to_string(),
+            predict: rule_combined_v3,
+        },
+        PredictionRule {
+            name: "combined_v4".to_string(),
+            predict: rule_combined_v4,
+        },
+        PredictionRule {
+            name: "combined_v5".to_string(),
+            predict: rule_combined_v5,
+        },
+        PredictionRule {
+            name: "combined_v6".to_string(),
+            predict: rule_combined_v6,
+        },
+        PredictionRule {
+            name: "combined_v7".to_string(),
+            predict: rule_combined_v7,
+        },
+        PredictionRule {
+            name: "combined_v8".to_string(),
+            predict: rule_combined_v8,
+        },
+        PredictionRule {
+            name: "combined_v9".to_string(),
+            predict: rule_combined_v9,
+        },
+        PredictionRule {
+            name: "combined_v10".to_string(),
+            predict: rule_combined_v10,
+        },
+        PredictionRule {
+            name: "combined_v11".to_string(),
+            predict: rule_combined_v11,
+        },
+        PredictionRule {
+            name: "combined_v12".to_string(),
+            predict: rule_combined_v12,
+        },
+        PredictionRule {
+            name: "combined_v13".to_string(),
+            predict: rule_combined_v13,
+        },
+        PredictionRule {
+            name: "combined_v14".to_string(),
+            predict: rule_combined_v14,
+        },
+        PredictionRule {
+            name: "combined_v15".to_string(),
+            predict: rule_combined_v15,
+        },
+        PredictionRule {
+            name: "combined_v16".to_string(),
+            predict: rule_combined_v16,
+        },
+        PredictionRule {
+            name: "combined_v17".to_string(),
+            predict: rule_combined_v17,
+        },
+        PredictionRule {
+            name: "combined_v18".to_string(),
+            predict: rule_combined_v18,
+        },
+        PredictionRule {
+            name: "combined_v19".to_string(),
+            predict: rule_combined_v19,
+        },
+        PredictionRule {
+            name: "combined_v20".to_string(),
+            predict: rule_combined_v20,
+        },
+        PredictionRule {
+            name: "combined_v21".to_string(),
+            predict: rule_combined_v21,
+        },
+        PredictionRule {
+            name: "combined_v22".to_string(),
+            predict: rule_combined_v22,
+        },
+        PredictionRule {
+            name: "combined_v23".to_string(),
+            predict: rule_combined_v23,
+        },
     ];
 
     // Evaluate for each metric
@@ -842,7 +921,10 @@ fn main() -> Result<()> {
         println!("Total comparisons with >5% margin: {}\n", winners.len());
 
         // Evaluate each rule
-        println!("{:>20} | {:>10} | {:>10} | {:>10}", "Rule", "Correct", "Total", "Accuracy");
+        println!(
+            "{:>20} | {:>10} | {:>10} | {:>10}",
+            "Rule", "Correct", "Total", "Accuracy"
+        );
         println!("{}", "-".repeat(60));
 
         let mut best_rule = String::new();
@@ -880,22 +962,40 @@ fn main() -> Result<()> {
             }
         }
 
-        println!("\nBest rule for {}: {} ({:.1}% accuracy)", metric.name(), best_rule, best_accuracy);
-        metric_results.push((*metric, best_rule.clone(), best_accuracy, moz_total, jpegli_total));
+        println!(
+            "\nBest rule for {}: {} ({:.1}% accuracy)",
+            metric.name(),
+            best_rule,
+            best_accuracy
+        );
+        metric_results.push((
+            *metric,
+            best_rule.clone(),
+            best_accuracy,
+            moz_total,
+            jpegli_total,
+        ));
 
         // Analyze by BPP level
         println!("\n--- Winners by BPP Level ({}) ---\n", metric.name());
-        println!("{:>8} | {:>12} | {:>12} | {:>12}", "BPP", "mozjpeg wins", "jpegli wins", "% jpegli");
+        println!(
+            "{:>8} | {:>12} | {:>12} | {:>12}",
+            "BPP", "mozjpeg wins", "jpegli wins", "% jpegli"
+        );
 
         let bpp_targets = [0.2, 0.4, 0.6, 0.8, 1.0, 1.5, 2.0, 3.0];
         for (i, bpp) in bpp_targets.iter().enumerate() {
-            let bucket_winners: Vec<_> = winners
-                .iter()
-                .filter(|((_, b), _)| *b == i as u8)
-                .collect();
+            let bucket_winners: Vec<_> =
+                winners.iter().filter(|((_, b), _)| *b == i as u8).collect();
 
-            let moz_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "mozjpeg").count();
-            let jpegli_wins = bucket_winners.iter().filter(|(_, (w, _))| w == "jpegli").count();
+            let moz_wins = bucket_winners
+                .iter()
+                .filter(|(_, (w, _))| w == "mozjpeg")
+                .count();
+            let jpegli_wins = bucket_winners
+                .iter()
+                .filter(|(_, (w, _))| w == "jpegli")
+                .count();
             let total = moz_wins + jpegli_wins;
             let pct_jpegli = if total > 0 {
                 100.0 * jpegli_wins as f64 / total as f64
@@ -910,7 +1010,10 @@ fn main() -> Result<()> {
         }
 
         // Analyze by image characteristics
-        println!("\n--- Winner Analysis by Image Type ({}) ---\n", metric.name());
+        println!(
+            "\n--- Winner Analysis by Image Type ({}) ---\n",
+            metric.name()
+        );
 
         // Group images by flat_block_pct
         let mut flat_analysis: HashMap<&str, (usize, usize)> = HashMap::new();
@@ -952,14 +1055,21 @@ fn main() -> Result<()> {
             }
         }
 
-        println!("{:>25} | {:>8} | {:>8} | {:>10}", "Category", "mozjpeg", "jpegli", "% jpegli");
+        println!(
+            "{:>25} | {:>8} | {:>8} | {:>10}",
+            "Category", "mozjpeg", "jpegli", "% jpegli"
+        );
         println!("{}", "-".repeat(60));
         let mut categories: Vec<_> = flat_analysis.keys().collect();
         categories.sort();
         for cat in categories {
             let (moz, jpegli) = flat_analysis[cat];
             let total = moz + jpegli;
-            let pct = if total > 0 { 100.0 * jpegli as f64 / total as f64 } else { 0.0 };
+            let pct = if total > 0 {
+                100.0 * jpegli as f64 / total as f64
+            } else {
+                0.0
+            };
             println!("{:>25} | {:>8} | {:>8} | {:>9.1}%", cat, moz, jpegli, pct);
         }
     } // End of metric loop
@@ -969,22 +1079,34 @@ fn main() -> Result<()> {
     println!("=== SUMMARY: Best Rules by Metric ===");
     println!("{}\n", "=".repeat(70));
 
-    println!("{:>15} | {:>20} | {:>10} | {:>15} | {:>15}",
-             "Metric", "Best Rule", "Accuracy", "mozjpeg wins", "jpegli wins");
+    println!(
+        "{:>15} | {:>20} | {:>10} | {:>15} | {:>15}",
+        "Metric", "Best Rule", "Accuracy", "mozjpeg wins", "jpegli wins"
+    );
     println!("{}", "-".repeat(85));
 
     for (metric, best_rule, accuracy, moz_wins, jpegli_wins) in &metric_results {
-        println!("{:>15} | {:>20} | {:>9.1}% | {:>15} | {:>15}",
-                 metric.name(), best_rule, accuracy, moz_wins, jpegli_wins);
+        println!(
+            "{:>15} | {:>20} | {:>9.1}% | {:>15} | {:>15}",
+            metric.name(),
+            best_rule,
+            accuracy,
+            moz_wins,
+            jpegli_wins
+        );
     }
 
     // Write detailed predictions for butteraugli (primary metric) using best rule
     let butteraugli_winners = determine_winners_bpp_based(&comparisons, QualityMetric::Butteraugli);
-    let butteraugli_best = metric_results.iter()
+    let butteraugli_best = metric_results
+        .iter()
         .find(|(m, _, _, _, _)| *m == QualityMetric::Butteraugli)
         .map(|(_, r, _, _, _)| r.as_str())
         .unwrap_or("combined_v13");
-    let best_predict = rules.iter().find(|r| r.name == butteraugli_best).map(|r| r.predict);
+    let best_predict = rules
+        .iter()
+        .find(|r| r.name == butteraugli_best)
+        .map(|r| r.predict);
 
     let mut file = std::fs::File::create(&args.output)?;
     writeln!(

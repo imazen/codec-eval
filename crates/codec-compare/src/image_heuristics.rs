@@ -37,27 +37,27 @@ struct ImageHeuristics {
     edge_density: f32, // % of pixels with strong edges
 
     // Block statistics (8x8 blocks)
-    flat_block_pct: f32,      // variance < 100
-    low_var_block_pct: f32,   // variance < 500
-    mid_var_block_pct: f32,   // variance 500-2000
-    high_var_block_pct: f32,  // variance 2000-5000
-    detail_block_pct: f32,    // variance > 5000
+    flat_block_pct: f32,     // variance < 100
+    low_var_block_pct: f32,  // variance < 500
+    mid_var_block_pct: f32,  // variance 500-2000
+    high_var_block_pct: f32, // variance 2000-5000
+    detail_block_pct: f32,   // variance > 5000
     block_variance_mean: f32,
     block_variance_std: f32,
 
     // Color statistics
-    color_variance: f32,       // variance across R,G,B channels
-    saturation_mean: f32,      // mean saturation
-    saturation_std: f32,       // saturation variation
+    color_variance: f32,  // variance across R,G,B channels
+    saturation_mean: f32, // mean saturation
+    saturation_std: f32,  // saturation variation
 
     // Frequency domain approximation (DCT-like features)
-    high_freq_energy: f32,     // estimate of high frequency content
-    low_freq_energy: f32,      // estimate of low frequency content
-    freq_ratio: f32,           // high/low ratio
+    high_freq_energy: f32, // estimate of high frequency content
+    low_freq_energy: f32,  // estimate of low frequency content
+    freq_ratio: f32,       // high/low ratio
 
     // Texture measures
-    local_contrast_mean: f32,  // mean of local contrast
-    local_contrast_std: f32,   // variation in local contrast
+    local_contrast_mean: f32, // mean of local contrast
+    local_contrast_std: f32,  // variation in local contrast
 
     // Spatial complexity
     horizontal_complexity: f32,
@@ -73,7 +73,12 @@ fn load_image(path: &Path) -> Option<(Vec<u8>, usize, usize)> {
     Some((rgb.into_raw(), width, height))
 }
 
-fn compute_heuristics(rgb: &[u8], width: usize, height: usize, image_name: &str) -> ImageHeuristics {
+fn compute_heuristics(
+    rgb: &[u8],
+    width: usize,
+    height: usize,
+    image_name: &str,
+) -> ImageHeuristics {
     let pixels = width * height;
 
     // Convert to grayscale for luminance analysis
@@ -105,10 +110,7 @@ fn compute_heuristics(rgb: &[u8], width: usize, height: usize, image_name: &str)
 
     let edge_strength_mean =
         edge_strengths.iter().sum::<f32>() / edge_strengths.len().max(1) as f32;
-    let edge_strength_max = edge_strengths
-        .iter()
-        .cloned()
-        .fold(0.0f32, |a, b| a.max(b));
+    let edge_strength_max = edge_strengths.iter().cloned().fold(0.0f32, |a, b| a.max(b));
     let edge_density = edge_strengths.iter().filter(|&&e| e > 30.0).count() as f32
         / edge_strengths.len().max(1) as f32;
 
@@ -192,11 +194,7 @@ fn compute_heuristics(rgb: &[u8], width: usize, height: usize, image_name: &str)
         .map(|p| {
             let max = p[0].max(p[1]).max(p[2]) as f32;
             let min = p[0].min(p[1]).min(p[2]) as f32;
-            if max > 0.0 {
-                (max - min) / max
-            } else {
-                0.0
-            }
+            if max > 0.0 { (max - min) / max } else { 0.0 }
         })
         .collect();
     let saturation_mean = saturations.iter().sum::<f32>() / pixels as f32;
@@ -376,19 +374,42 @@ fn main() -> anyhow::Result<()> {
         writeln!(
             file,
             "{},{},{},{},{:.2},{:.2},{:.2},{:.2},{:.2},{:.4},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.2},{:.4},{:.4},{:.4},{:.4},{:.4},{:.2},{:.2},{:.2},{:.2},{:.2}",
-            h.image, h.width, h.height, h.pixels,
-            h.mean_luminance, h.luminance_variance, h.luminance_std,
-            h.edge_strength_mean, h.edge_strength_max, h.edge_density,
-            h.flat_block_pct, h.low_var_block_pct, h.mid_var_block_pct, h.high_var_block_pct, h.detail_block_pct,
-            h.block_variance_mean, h.block_variance_std,
-            h.color_variance, h.saturation_mean, h.saturation_std,
-            h.high_freq_energy, h.low_freq_energy, h.freq_ratio,
-            h.local_contrast_mean, h.local_contrast_std,
-            h.horizontal_complexity, h.vertical_complexity, h.diagonal_complexity
+            h.image,
+            h.width,
+            h.height,
+            h.pixels,
+            h.mean_luminance,
+            h.luminance_variance,
+            h.luminance_std,
+            h.edge_strength_mean,
+            h.edge_strength_max,
+            h.edge_density,
+            h.flat_block_pct,
+            h.low_var_block_pct,
+            h.mid_var_block_pct,
+            h.high_var_block_pct,
+            h.detail_block_pct,
+            h.block_variance_mean,
+            h.block_variance_std,
+            h.color_variance,
+            h.saturation_mean,
+            h.saturation_std,
+            h.high_freq_energy,
+            h.low_freq_energy,
+            h.freq_ratio,
+            h.local_contrast_mean,
+            h.local_contrast_std,
+            h.horizontal_complexity,
+            h.vertical_complexity,
+            h.diagonal_complexity
         )?;
     }
 
-    println!("\nWrote {} results to {}", results.len(), args.output.display());
+    println!(
+        "\nWrote {} results to {}",
+        results.len(),
+        args.output.display()
+    );
 
     Ok(())
 }

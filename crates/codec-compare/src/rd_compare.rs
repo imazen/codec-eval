@@ -4,7 +4,7 @@
 //! This is a more fair comparison than same-Q comparisons.
 
 use anyhow::Result;
-use butteraugli_oxide::{compute_butteraugli, ButteraugliParams};
+use butteraugli::{ButteraugliParams, compute_butteraugli};
 use clap::Parser;
 use std::path::{Path, PathBuf};
 
@@ -269,9 +269,15 @@ fn main() -> Result<()> {
         }
 
         // Print detailed comparison for this image
-        println!("\n\nImage: {}", path.file_name().unwrap_or_default().to_string_lossy());
+        println!(
+            "\n\nImage: {}",
+            path.file_name().unwrap_or_default().to_string_lossy()
+        );
         println!("  Size: {}x{}", width, height);
-        println!("  {:>8} | {:>12} {:>12} | {:>12}", "BPP", "mozjpeg", "jpegli", "Winner");
+        println!(
+            "  {:>8} | {:>12} {:>12} | {:>12}",
+            "BPP", "mozjpeg", "jpegli", "Winner"
+        );
         println!("  {}", "-".repeat(55));
 
         for &target_bpp in &bpp_targets {
@@ -299,7 +305,10 @@ fn main() -> Result<()> {
     // Summary
     println!("\n=== Summary (at matched file sizes) ===\n");
     println!("Total images analyzed: {}\n", total_images);
-    println!("{:>8} | {:>12} | {:>12}", "BPP", "mozjpeg wins", "jpegli wins");
+    println!(
+        "{:>8} | {:>12} | {:>12}",
+        "BPP", "mozjpeg wins", "jpegli wins"
+    );
     println!("{}", "-".repeat(40));
 
     for (idx, &target_bpp) in bpp_targets.iter().enumerate() {
@@ -309,7 +318,11 @@ fn main() -> Result<()> {
             "{:>8.2} | {:>12} | {:>12}",
             target_bpp,
             format!("{} ({:.0}%)", moz, 100.0 * moz as f64 / total_images as f64),
-            format!("{} ({:.0}%)", jpegli, 100.0 * jpegli as f64 / total_images as f64)
+            format!(
+                "{} ({:.0}%)",
+                jpegli,
+                100.0 * jpegli as f64 / total_images as f64
+            )
         );
     }
 

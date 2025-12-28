@@ -12,11 +12,11 @@
 pub fn mozjpeg_to_jpegli_quality(moz_quality: u8) -> u8 {
     // Approximate mapping based on butteraugli equivalence
     match moz_quality {
-        90..=100 => ((moz_quality as i32 - 10).max(75) as u8),  // Q90→Q80
-        85..=89 => ((moz_quality as i32 - 15).max(70) as u8),   // Q85→Q70
-        75..=84 => ((moz_quality as i32 - 20).max(55) as u8),   // Q75→Q55
-        60..=74 => ((moz_quality as i32 - 25).max(35) as u8),   // Q60→Q35
-        _ => 25,  // Below Q60, jpegli Q25 is still better
+        90..=100 => ((moz_quality as i32 - 10).max(75) as u8), // Q90→Q80
+        85..=89 => ((moz_quality as i32 - 15).max(70) as u8),  // Q85→Q70
+        75..=84 => ((moz_quality as i32 - 20).max(55) as u8),  // Q75→Q55
+        60..=74 => ((moz_quality as i32 - 25).max(35) as u8),  // Q60→Q35
+        _ => 25, // Below Q60, jpegli Q25 is still better
     }
 }
 
@@ -27,7 +27,7 @@ pub fn jpegli_to_mozjpeg_quality(jpegli_quality: u8) -> u8 {
         70..=79 => jpegli_quality + 15,
         55..=69 => jpegli_quality + 20,
         35..=54 => jpegli_quality + 25,
-        _ => 100,  // jpegli Q25-34 has no mozjpeg equivalent
+        _ => 100, // jpegli Q25-34 has no mozjpeg equivalent
     }
 }
 
@@ -70,7 +70,7 @@ pub fn predict_encoder_for_quality(
     // Crossover point depends on image characteristics
     let crossover = if flat_block_pct > 75.0 && complexity < 20.0 {
         // Very flat images: mozjpeg wins up to higher quality
-        3.0  // butteraugli threshold
+        3.0 // butteraugli threshold
     } else if flat_block_pct > 60.0 {
         // Flat images
         3.5
@@ -121,10 +121,7 @@ pub fn unified_quality_to_butteraugli(unified_quality: u8) -> f64 {
 }
 
 /// Get encoder quality setting for unified quality target
-pub fn unified_to_encoder_quality(
-    unified_quality: u8,
-    encoder: &str,
-) -> u8 {
+pub fn unified_to_encoder_quality(unified_quality: u8, encoder: &str) -> u8 {
     let target_ba = unified_quality_to_butteraugli(unified_quality);
     quality_for_butteraugli(target_ba, encoder)
 }
