@@ -23,7 +23,7 @@
 //! Maximum observed difference: 26 levels (for bright saturated yellows).
 //! Mean absolute error: ~0.69 per channel.
 
-use butteraugli_oxide::xyb;
+use butteraugli::xyb;
 
 // XYB value ranges for all possible sRGB u8 inputs (empirically determined)
 const X_MIN: f32 = -0.016; // Slightly padded from -0.015386

@@ -32,7 +32,7 @@ rayon = "1.10"
 anyhow = "1"
 
 # Quality metrics
-butteraugli-oxide.workspace = true
+butteraugli.workspace = true
 
 # JPEG encoders
 mozjpeg = { version = "0.10", optional = true }

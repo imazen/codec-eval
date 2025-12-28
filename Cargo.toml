@@ -19,7 +19,7 @@ imgref = "1.10"
 rgb = "0.8"
 dssim-core = "3.2"
 ssimulacra2 = "0.5"
-butteraugli-oxide = "0.2.1"
+butteraugli = "0.2"
 rayon = "1.10"
 chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "4.5", features = ["derive", "env"] }
@@ -54,7 +54,7 @@ imgref.workspace = true
 rgb.workspace = true
 dssim-core.workspace = true
 ssimulacra2.workspace = true
-butteraugli-oxide.workspace = true
+butteraugli.workspace = true
 rayon.workspace = true
 chrono.workspace = true
 # Optional ICC support

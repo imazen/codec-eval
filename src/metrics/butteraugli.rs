@@ -14,7 +14,7 @@
 //!
 //! Use [`calculate_butteraugli_icc`] for images with non-sRGB color profiles.
 
-use butteraugli_oxide::{ButteraugliParams, compute_butteraugli};
+use butteraugli::{ButteraugliParams, compute_butteraugli};
 
 use super::icc::ColorProfile;
 use crate::error::{Error, Result};
