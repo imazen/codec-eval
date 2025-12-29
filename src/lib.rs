@@ -65,4 +65,4 @@ pub use interpolation::{
     GapPolynomial, InterpolationConfig, InterpolationTable,
     compute_gap_polynomials, fit_gap_polynomial, fit_power_law, linear_interpolate,
 };
-pub use viewing::ViewingCondition;
+pub use viewing::{ViewingCondition, SimulationMode, SimulationParams};

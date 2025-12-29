@@ -10,8 +10,47 @@
 //! - **browser_dppx**: The browser/OS device pixel ratio (e.g., 2.0 for retina).
 //! - **image_intrinsic_dppx**: The image's intrinsic pixels per CSS pixel (for srcset).
 //! - **ppd**: The effective pixels per degree for this specific image viewing.
+//!
+//! ## Simulation Modes
+//!
+//! When simulating viewing conditions for metric calculation, there are two approaches:
+//!
+//! - [`SimulationMode::Accurate`]: Simulate browser behavior exactly, including upscaling
+//!   undersized images. This matches real-world viewing but introduces resampling artifacts.
+//!
+//! - [`SimulationMode::DownsampleOnly`]: Never upsample images. For undersized images,
+//!   adjust the effective PPD instead. This avoids simulation artifacts but requires
+//!   metric threshold adjustment.
 
 use serde::{Deserialize, Serialize};
+
+/// How to handle image scaling during viewing simulation.
+///
+/// When calculating perceptual metrics, we need to simulate how images appear
+/// on different devices. This affects whether we resample images or adjust
+/// metric thresholds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub enum SimulationMode {
+    /// Simulate browser behavior exactly.
+    ///
+    /// - Undersized images (ratio < 1): Upsample to simulate browser upscaling
+    /// - Oversized images (ratio > 1): Downsample to simulate browser downscaling
+    ///
+    /// This matches real-world viewing but introduces resampling artifacts
+    /// that may affect metric accuracy.
+    #[default]
+    Accurate,
+
+    /// Never upsample, only downsample.
+    ///
+    /// - Undersized images: Keep at native resolution, adjust effective PPD
+    /// - Oversized images: Downsample normally
+    ///
+    /// This avoids introducing upsampling artifacts in the simulation.
+    /// The effective PPD is adjusted to account for the missing upscale,
+    /// making metric thresholds more lenient for undersized images.
+    DownsampleOnly,
+}
 
 /// Viewing condition for perceptual quality assessment.
 ///
@@ -164,6 +203,139 @@ impl ViewingCondition {
         // making artifacts less visible (higher effective PPD).
         // When intrinsic < browser, image pixels are larger, artifacts more visible.
         self.acuity_ppd * (intrinsic / browser)
+    }
+
+    /// Compute the srcset ratio (intrinsic / browser).
+    ///
+    /// - ratio < 1: Image is undersized, browser upscales
+    /// - ratio = 1: Native resolution
+    /// - ratio > 1: Image is oversized, browser downscales
+    #[must_use]
+    pub fn srcset_ratio(&self) -> f64 {
+        let browser = self.browser_dppx.unwrap_or(1.0);
+        let intrinsic = self.image_intrinsic_dppx.unwrap_or(1.0);
+        intrinsic / browser
+    }
+
+    /// Compute simulation parameters for a given image size.
+    ///
+    /// Returns the scale factor to apply and the adjusted PPD for metrics.
+    ///
+    /// # Arguments
+    ///
+    /// * `image_width` - Original image width in pixels
+    /// * `image_height` - Original image height in pixels
+    /// * `mode` - Simulation mode (accurate or downsample-only)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use codec_eval::viewing::{ViewingCondition, SimulationMode};
+    ///
+    /// let condition = ViewingCondition::desktop()
+    ///     .with_browser_dppx(2.0)
+    ///     .with_image_intrinsic_dppx(1.0); // undersized
+    ///
+    /// let params = condition.simulation_params(1000, 800, SimulationMode::DownsampleOnly);
+    /// assert_eq!(params.scale_factor, 1.0); // No upscaling
+    /// assert!(params.adjusted_ppd < 40.0);  // Adjusted for missing upscale
+    /// ```
+    #[must_use]
+    pub fn simulation_params(&self, image_width: u32, image_height: u32, mode: SimulationMode) -> SimulationParams {
+        let ratio = self.srcset_ratio();
+        let base_ppd = self.acuity_ppd;
+
+        match mode {
+            SimulationMode::Accurate => {
+                // Full simulation: scale by ratio
+                let scale_factor = ratio;
+                let target_width = (image_width as f64 * scale_factor).round() as u32;
+                let target_height = (image_height as f64 * scale_factor).round() as u32;
+
+                SimulationParams {
+                    scale_factor,
+                    target_width,
+                    target_height,
+                    adjusted_ppd: self.effective_ppd(),
+                    requires_upscale: ratio < 1.0,
+                    requires_downscale: ratio > 1.0,
+                }
+            }
+            SimulationMode::DownsampleOnly => {
+                if ratio >= 1.0 {
+                    // Oversized: downsample normally
+                    let scale_factor = ratio;
+                    let target_width = (image_width as f64 * scale_factor).round() as u32;
+                    let target_height = (image_height as f64 * scale_factor).round() as u32;
+
+                    SimulationParams {
+                        scale_factor,
+                        target_width,
+                        target_height,
+                        adjusted_ppd: self.effective_ppd(),
+                        requires_upscale: false,
+                        requires_downscale: ratio > 1.0,
+                    }
+                } else {
+                    // Undersized: keep original size, adjust PPD instead
+                    // The effective PPD is reduced because we're not simulating the upscale
+                    // that would make artifacts more visible
+                    let adjusted_ppd = base_ppd * ratio;
+
+                    SimulationParams {
+                        scale_factor: 1.0,
+                        target_width: image_width,
+                        target_height: image_height,
+                        adjusted_ppd,
+                        requires_upscale: false, // We skip upscaling
+                        requires_downscale: false,
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Parameters for viewing simulation.
+///
+/// Describes how to transform an image and adjust metrics for a viewing condition.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SimulationParams {
+    /// Scale factor to apply to the image (1.0 = no scaling).
+    pub scale_factor: f64,
+
+    /// Target width after scaling.
+    pub target_width: u32,
+
+    /// Target height after scaling.
+    pub target_height: u32,
+
+    /// Adjusted PPD for metric thresholds.
+    ///
+    /// In downsample-only mode, this may differ from effective_ppd()
+    /// to compensate for skipped upscaling.
+    pub adjusted_ppd: f64,
+
+    /// Whether the simulation requires upscaling.
+    ///
+    /// In downsample-only mode, this is always false.
+    pub requires_upscale: bool,
+
+    /// Whether the simulation requires downscaling.
+    pub requires_downscale: bool,
+}
+
+impl SimulationParams {
+    /// Check if any scaling is required.
+    #[must_use]
+    pub fn requires_scaling(&self) -> bool {
+        self.requires_upscale || self.requires_downscale
+    }
+
+    /// Get the scale factor clamped to downscale-only (max 1.0).
+    #[must_use]
+    pub fn downscale_only_factor(&self) -> f64 {
+        self.scale_factor.min(1.0)
     }
 }
 
@@ -456,5 +628,122 @@ mod tests {
                 "Presets should be ordered by effective PPD"
             );
         }
+    }
+
+    #[test]
+    fn test_srcset_ratio() {
+        // Native: ratio = 1
+        let v = ViewingCondition::desktop();
+        assert!((v.srcset_ratio() - 1.0).abs() < 0.001);
+
+        // Undersized: 1x on 2x = 0.5
+        let v = ViewingCondition::desktop()
+            .with_browser_dppx(2.0)
+            .with_image_intrinsic_dppx(1.0);
+        assert!((v.srcset_ratio() - 0.5).abs() < 0.001);
+
+        // Oversized: 2x on 1x = 2.0
+        let v = ViewingCondition::desktop()
+            .with_browser_dppx(1.0)
+            .with_image_intrinsic_dppx(2.0);
+        assert!((v.srcset_ratio() - 2.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_simulation_accurate_undersized() {
+        // 1x on 2x display (undersized)
+        let v = ViewingCondition::new(40.0)
+            .with_browser_dppx(2.0)
+            .with_image_intrinsic_dppx(1.0);
+
+        let params = v.simulation_params(1000, 800, SimulationMode::Accurate);
+
+        // Should upscale to simulate browser behavior
+        assert!((params.scale_factor - 0.5).abs() < 0.001);
+        assert_eq!(params.target_width, 500);
+        assert_eq!(params.target_height, 400);
+        assert!(params.requires_upscale); // ratio < 1 means browser upscales
+        assert!(!params.requires_downscale);
+    }
+
+    #[test]
+    fn test_simulation_accurate_oversized() {
+        // 2x on 1x display (oversized)
+        let v = ViewingCondition::new(40.0)
+            .with_browser_dppx(1.0)
+            .with_image_intrinsic_dppx(2.0);
+
+        let params = v.simulation_params(1000, 800, SimulationMode::Accurate);
+
+        // Should downscale
+        assert!((params.scale_factor - 2.0).abs() < 0.001);
+        assert_eq!(params.target_width, 2000);
+        assert_eq!(params.target_height, 1600);
+        assert!(!params.requires_upscale);
+        assert!(params.requires_downscale);
+    }
+
+    #[test]
+    fn test_simulation_downsample_only_undersized() {
+        // 1x on 2x display (undersized) with downsample-only mode
+        let v = ViewingCondition::new(40.0)
+            .with_browser_dppx(2.0)
+            .with_image_intrinsic_dppx(1.0);
+
+        let params = v.simulation_params(1000, 800, SimulationMode::DownsampleOnly);
+
+        // Should NOT upscale, keep original size
+        assert!((params.scale_factor - 1.0).abs() < 0.001);
+        assert_eq!(params.target_width, 1000);
+        assert_eq!(params.target_height, 800);
+        assert!(!params.requires_upscale);
+        assert!(!params.requires_downscale);
+
+        // PPD should be adjusted to compensate (reduced)
+        assert!((params.adjusted_ppd - 20.0).abs() < 0.1); // 40 * 0.5 = 20
+    }
+
+    #[test]
+    fn test_simulation_downsample_only_oversized() {
+        // 2x on 1x display (oversized) - should still downscale
+        let v = ViewingCondition::new(40.0)
+            .with_browser_dppx(1.0)
+            .with_image_intrinsic_dppx(2.0);
+
+        let params = v.simulation_params(1000, 800, SimulationMode::DownsampleOnly);
+
+        // Should downscale (oversized images are fine to downscale)
+        assert!((params.scale_factor - 2.0).abs() < 0.001);
+        assert_eq!(params.target_width, 2000);
+        assert_eq!(params.target_height, 1600);
+        assert!(!params.requires_upscale);
+        assert!(params.requires_downscale);
+    }
+
+    #[test]
+    fn test_simulation_params_helpers() {
+        let params = SimulationParams {
+            scale_factor: 0.5,
+            target_width: 500,
+            target_height: 400,
+            adjusted_ppd: 20.0,
+            requires_upscale: true,
+            requires_downscale: false,
+        };
+
+        assert!(params.requires_scaling());
+        assert!((params.downscale_only_factor() - 0.5).abs() < 0.001);
+
+        let params2 = SimulationParams {
+            scale_factor: 2.0,
+            target_width: 2000,
+            target_height: 1600,
+            adjusted_ppd: 80.0,
+            requires_upscale: false,
+            requires_downscale: true,
+        };
+
+        assert!(params2.requires_scaling());
+        assert!((params2.downscale_only_factor() - 1.0).abs() < 0.001);
     }
 }
