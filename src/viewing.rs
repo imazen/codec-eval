@@ -325,6 +325,12 @@ pub struct SimulationParams {
     pub requires_downscale: bool,
 }
 
+/// Reference PPD for metric threshold normalization.
+///
+/// Desktop viewing at arm's length (~24"/60cm) is the most demanding
+/// common viewing condition, so we use it as the baseline.
+pub const REFERENCE_PPD: f64 = 40.0;
+
 impl SimulationParams {
     /// Check if any scaling is required.
     #[must_use]
@@ -336,6 +342,123 @@ impl SimulationParams {
     #[must_use]
     pub fn downscale_only_factor(&self) -> f64 {
         self.scale_factor.min(1.0)
+    }
+
+    /// Compute threshold multiplier for metric values.
+    ///
+    /// This accounts for how viewing conditions affect artifact visibility.
+    /// Higher PPD = smaller angular size = artifacts less visible = more lenient thresholds.
+    ///
+    /// The multiplier is relative to [`REFERENCE_PPD`] (40, desktop viewing).
+    ///
+    /// # Returns
+    ///
+    /// - 1.0 at reference PPD (40)
+    /// - > 1.0 for higher PPD (more lenient, e.g., 1.75 at 70 PPD)
+    /// - < 1.0 for lower PPD (stricter, e.g., 0.5 at 20 PPD)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use codec_eval::viewing::{ViewingCondition, SimulationMode, REFERENCE_PPD};
+    ///
+    /// // Desktop at reference PPD
+    /// let condition = ViewingCondition::new(40.0);
+    /// let params = condition.simulation_params(1000, 800, SimulationMode::Accurate);
+    /// assert!((params.threshold_multiplier() - 1.0).abs() < 0.01);
+    ///
+    /// // Laptop at 70 PPD - more lenient
+    /// let condition = ViewingCondition::new(70.0);
+    /// let params = condition.simulation_params(1000, 800, SimulationMode::Accurate);
+    /// assert!(params.threshold_multiplier() > 1.5);
+    /// ```
+    #[must_use]
+    pub fn threshold_multiplier(&self) -> f64 {
+        self.adjusted_ppd / REFERENCE_PPD
+    }
+
+    /// Adjust a DSSIM threshold for this viewing condition.
+    ///
+    /// Higher PPD allows higher DSSIM values (artifacts less visible).
+    ///
+    /// # Arguments
+    ///
+    /// * `base_threshold` - Threshold at reference PPD (e.g., 0.0003 for imperceptible)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use codec_eval::viewing::{ViewingCondition, SimulationMode};
+    ///
+    /// let condition = ViewingCondition::new(70.0); // laptop
+    /// let params = condition.simulation_params(1000, 800, SimulationMode::Accurate);
+    ///
+    /// // Imperceptible threshold at reference is 0.0003
+    /// let adjusted = params.adjust_dssim_threshold(0.0003);
+    /// assert!(adjusted > 0.0003); // More lenient at higher PPD
+    /// ```
+    #[must_use]
+    pub fn adjust_dssim_threshold(&self, base_threshold: f64) -> f64 {
+        base_threshold * self.threshold_multiplier()
+    }
+
+    /// Adjust a Butteraugli threshold for this viewing condition.
+    ///
+    /// Higher PPD allows higher Butteraugli values (artifacts less visible).
+    ///
+    /// # Arguments
+    ///
+    /// * `base_threshold` - Threshold at reference PPD (e.g., 1.0 for imperceptible)
+    #[must_use]
+    pub fn adjust_butteraugli_threshold(&self, base_threshold: f64) -> f64 {
+        base_threshold * self.threshold_multiplier()
+    }
+
+    /// Adjust a SSIMULACRA2 threshold for this viewing condition.
+    ///
+    /// Higher PPD allows lower SSIMULACRA2 scores (artifacts less visible).
+    /// Note: SSIMULACRA2 is inverted (higher = better), so we divide.
+    ///
+    /// # Arguments
+    ///
+    /// * `base_threshold` - Threshold at reference PPD (e.g., 90.0 for imperceptible)
+    #[must_use]
+    pub fn adjust_ssimulacra2_threshold(&self, base_threshold: f64) -> f64 {
+        // SSIMULACRA2: higher is better, so higher PPD means we can accept lower scores
+        // But we need to be careful not to go below 0
+        let multiplier = self.threshold_multiplier();
+        if multiplier >= 1.0 {
+            // Higher PPD: can accept lower scores
+            // 90 at 40 PPD → ~51 at 70 PPD (90 - (90-0) * (1 - 1/1.75))
+            base_threshold - (100.0 - base_threshold) * (1.0 - 1.0 / multiplier)
+        } else {
+            // Lower PPD: need higher scores
+            // 90 at 40 PPD → 95 at 20 PPD
+            base_threshold + (100.0 - base_threshold) * (1.0 / multiplier - 1.0)
+        }.clamp(0.0, 100.0)
+    }
+
+    /// Check if a DSSIM value is acceptable for this viewing condition.
+    ///
+    /// # Arguments
+    ///
+    /// * `dssim` - Measured DSSIM value
+    /// * `base_threshold` - Threshold at reference PPD
+    #[must_use]
+    pub fn dssim_acceptable(&self, dssim: f64, base_threshold: f64) -> bool {
+        dssim < self.adjust_dssim_threshold(base_threshold)
+    }
+
+    /// Check if a Butteraugli value is acceptable for this viewing condition.
+    #[must_use]
+    pub fn butteraugli_acceptable(&self, butteraugli: f64, base_threshold: f64) -> bool {
+        butteraugli < self.adjust_butteraugli_threshold(base_threshold)
+    }
+
+    /// Check if a SSIMULACRA2 value is acceptable for this viewing condition.
+    #[must_use]
+    pub fn ssimulacra2_acceptable(&self, ssimulacra2: f64, base_threshold: f64) -> bool {
+        ssimulacra2 > self.adjust_ssimulacra2_threshold(base_threshold)
     }
 }
 
@@ -745,5 +868,136 @@ mod tests {
 
         assert!(params2.requires_scaling());
         assert!((params2.downscale_only_factor() - 1.0).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_threshold_multiplier() {
+        // Reference PPD = 40
+        let params_ref = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 40.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        assert!((params_ref.threshold_multiplier() - 1.0).abs() < 0.001);
+
+        // Higher PPD = more lenient
+        let params_high = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 80.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        assert!((params_high.threshold_multiplier() - 2.0).abs() < 0.001);
+
+        // Lower PPD = stricter
+        let params_low = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 20.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        assert!((params_low.threshold_multiplier() - 0.5).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_adjust_dssim_threshold() {
+        let base_threshold = 0.0003; // imperceptible at reference
+
+        // At reference PPD, threshold unchanged
+        let params_ref = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 40.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        assert!((params_ref.adjust_dssim_threshold(base_threshold) - 0.0003).abs() < 0.00001);
+
+        // At higher PPD (laptop), more lenient
+        let params_laptop = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 70.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        let adjusted = params_laptop.adjust_dssim_threshold(base_threshold);
+        assert!(adjusted > 0.0003); // More lenient
+        assert!((adjusted - 0.000525).abs() < 0.0001); // 0.0003 * 1.75
+    }
+
+    #[test]
+    fn test_adjust_ssimulacra2_threshold() {
+        let base_threshold = 90.0; // imperceptible at reference
+
+        // At reference PPD, threshold unchanged
+        let params_ref = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 40.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        assert!((params_ref.adjust_ssimulacra2_threshold(base_threshold) - 90.0).abs() < 0.1);
+
+        // At higher PPD, can accept lower scores
+        let params_high = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 80.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        let adjusted = params_high.adjust_ssimulacra2_threshold(base_threshold);
+        assert!(adjusted < 90.0); // Can accept lower score
+
+        // At lower PPD, need higher scores
+        let params_low = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 20.0,
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+        let adjusted = params_low.adjust_ssimulacra2_threshold(base_threshold);
+        assert!(adjusted > 90.0); // Need higher score
+    }
+
+    #[test]
+    fn test_metric_acceptable() {
+        let params = SimulationParams {
+            scale_factor: 1.0,
+            target_width: 1000,
+            target_height: 800,
+            adjusted_ppd: 70.0, // laptop, more lenient
+            requires_upscale: false,
+            requires_downscale: false,
+        };
+
+        // DSSIM: 0.0004 would fail at reference (40 PPD) but pass at 70 PPD
+        // Threshold at 70 PPD = 0.0003 * 1.75 = 0.000525
+        assert!(params.dssim_acceptable(0.0004, 0.0003));
+        assert!(!params.dssim_acceptable(0.0006, 0.0003));
+
+        // Butteraugli: 1.5 would fail at reference but pass at 70 PPD
+        // Threshold at 70 PPD = 1.0 * 1.75 = 1.75
+        assert!(params.butteraugli_acceptable(1.5, 1.0));
+
+        // SSIMULACRA2: at 70 PPD (multiplier 1.75), threshold is ~85.7
+        // So 86 passes but 85 fails
+        assert!(params.ssimulacra2_acceptable(86.0, 90.0));
+        assert!(!params.ssimulacra2_acceptable(84.0, 90.0));
     }
 }
