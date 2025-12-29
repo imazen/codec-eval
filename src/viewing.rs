@@ -173,6 +173,191 @@ impl Default for ViewingCondition {
     }
 }
 
+/// Pre-defined viewing condition presets for common scenarios.
+///
+/// These presets model real-world viewing scenarios including srcset
+/// image delivery on various devices.
+///
+/// ## Terminology
+///
+/// - **Native**: srcset matches device DPPX (1x on 1x, 2x on 2x, etc.)
+/// - **Undersized**: srcset is smaller than device (browser upscales, artifacts amplified)
+/// - **Oversized**: srcset is larger than device (browser downscales, artifacts hidden)
+///
+/// ## Preset PPD Values
+///
+/// | Device | Base PPD | Typical DPPX | Viewing Distance |
+/// |--------|----------|--------------|------------------|
+/// | Desktop | 40 | 1.0 | ~24" / 60cm |
+/// | Laptop | 70 | 2.0 | ~18" / 45cm |
+/// | Phone | 95 | 3.0 | ~12" / 30cm |
+pub mod presets {
+    use super::ViewingCondition;
+
+    //=========================================================================
+    // Native Conditions (srcset matches device DPPX)
+    //=========================================================================
+
+    /// Desktop monitor at arm's length, 1x srcset on 1x display.
+    ///
+    /// This is the most demanding condition - artifacts are most visible.
+    /// Effective PPD: 40
+    #[must_use]
+    pub fn native_desktop() -> ViewingCondition {
+        ViewingCondition::new(40.0)
+            .with_browser_dppx(1.0)
+            .with_image_intrinsic_dppx(1.0)
+    }
+
+    /// Laptop/retina screen, 2x srcset on 2x display.
+    ///
+    /// Common premium laptop viewing condition.
+    /// Effective PPD: 70
+    #[must_use]
+    pub fn native_laptop() -> ViewingCondition {
+        ViewingCondition::new(70.0)
+            .with_browser_dppx(2.0)
+            .with_image_intrinsic_dppx(2.0)
+    }
+
+    /// Smartphone, 3x srcset on 3x display.
+    ///
+    /// High-DPI phone with matching srcset.
+    /// Effective PPD: 95
+    #[must_use]
+    pub fn native_phone() -> ViewingCondition {
+        ViewingCondition::new(95.0)
+            .with_browser_dppx(3.0)
+            .with_image_intrinsic_dppx(3.0)
+    }
+
+    //=========================================================================
+    // Undersized Conditions (browser upscales, artifacts amplified)
+    //=========================================================================
+
+    /// 1x srcset shown on 3x phone display (0.33x ratio).
+    ///
+    /// Worst case: massive upscaling makes artifacts very visible.
+    /// Effective PPD: ~32 (95 * 1/3)
+    #[must_use]
+    pub fn srcset_1x_on_phone() -> ViewingCondition {
+        ViewingCondition::new(95.0)
+            .with_browser_dppx(3.0)
+            .with_image_intrinsic_dppx(1.0)
+    }
+
+    /// 1x srcset shown on 2x laptop display (0.5x ratio).
+    ///
+    /// Common when srcset is misconfigured or unavailable.
+    /// Effective PPD: 35 (70 * 1/2)
+    #[must_use]
+    pub fn srcset_1x_on_laptop() -> ViewingCondition {
+        ViewingCondition::new(70.0)
+            .with_browser_dppx(2.0)
+            .with_image_intrinsic_dppx(1.0)
+    }
+
+    /// 2x srcset shown on 3x phone display (0.67x ratio).
+    ///
+    /// Moderate upscaling on high-DPI phone.
+    /// Effective PPD: ~63 (95 * 2/3)
+    #[must_use]
+    pub fn srcset_2x_on_phone() -> ViewingCondition {
+        ViewingCondition::new(95.0)
+            .with_browser_dppx(3.0)
+            .with_image_intrinsic_dppx(2.0)
+    }
+
+    //=========================================================================
+    // Oversized Conditions (browser downscales, artifacts hidden)
+    //=========================================================================
+
+    /// 2x srcset shown on 1x desktop display (2.0x ratio).
+    ///
+    /// Downscaling hides artifacts, but wastes bandwidth.
+    /// Effective PPD: 80 (40 * 2)
+    #[must_use]
+    pub fn srcset_2x_on_desktop() -> ViewingCondition {
+        ViewingCondition::new(40.0)
+            .with_browser_dppx(1.0)
+            .with_image_intrinsic_dppx(2.0)
+    }
+
+    /// 2x srcset shown on 1.5x laptop display (1.33x ratio).
+    ///
+    /// Slight oversizing on mid-DPI laptop.
+    /// Effective PPD: ~93 (70 * 2/1.5)
+    #[must_use]
+    pub fn srcset_2x_on_laptop_1_5x() -> ViewingCondition {
+        ViewingCondition::new(70.0)
+            .with_browser_dppx(1.5)
+            .with_image_intrinsic_dppx(2.0)
+    }
+
+    /// 3x srcset shown on 3x phone display.
+    ///
+    /// Native phone viewing, same as native_phone().
+    /// Effective PPD: 95
+    #[must_use]
+    pub fn srcset_3x_on_phone() -> ViewingCondition {
+        native_phone()
+    }
+
+    //=========================================================================
+    // Preset Collections
+    //=========================================================================
+
+    /// All standard presets for comprehensive analysis.
+    ///
+    /// Returns conditions ordered from most demanding (lowest effective PPD)
+    /// to least demanding (highest effective PPD).
+    #[must_use]
+    pub fn all() -> Vec<ViewingCondition> {
+        vec![
+            srcset_1x_on_phone(),    // ~32 PPD - most demanding
+            srcset_1x_on_laptop(),   // 35 PPD
+            native_desktop(),        // 40 PPD
+            srcset_2x_on_phone(),    // ~63 PPD
+            native_laptop(),         // 70 PPD
+            srcset_2x_on_desktop(),  // 80 PPD
+            srcset_2x_on_laptop_1_5x(), // ~93 PPD
+            native_phone(),          // 95 PPD - least demanding
+        ]
+    }
+
+    /// Key presets for compact analysis tables.
+    ///
+    /// Covers the main device types at native resolution.
+    #[must_use]
+    pub fn key() -> Vec<ViewingCondition> {
+        vec![
+            native_desktop(),
+            native_laptop(),
+            native_phone(),
+        ]
+    }
+
+    /// Baseline condition for quality mapping (native laptop).
+    ///
+    /// This is a good middle-ground for quality calibration:
+    /// - More forgiving than desktop (70 vs 40 PPD)
+    /// - Representative of premium laptop viewing
+    /// - 2x srcset is common for web images
+    #[must_use]
+    pub fn baseline() -> ViewingCondition {
+        native_laptop()
+    }
+
+    /// Most demanding condition for diminishing returns analysis.
+    ///
+    /// Native desktop is where artifacts are most visible,
+    /// making it ideal for determining quality upper bounds.
+    #[must_use]
+    pub fn demanding() -> ViewingCondition {
+        native_desktop()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -226,5 +411,50 @@ mod tests {
             .with_image_intrinsic_dppx(1.0)
             .with_ppd_override(100.0);
         assert!((v.effective_ppd() - 100.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_presets_native() {
+        let desktop = presets::native_desktop();
+        assert!((desktop.effective_ppd() - 40.0).abs() < 0.1);
+
+        let laptop = presets::native_laptop();
+        assert!((laptop.effective_ppd() - 70.0).abs() < 0.1);
+
+        let phone = presets::native_phone();
+        assert!((phone.effective_ppd() - 95.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_presets_undersized() {
+        // 1x on 3x phone = 95 * (1/3) ≈ 31.67
+        let v = presets::srcset_1x_on_phone();
+        assert!(v.effective_ppd() < 35.0);
+        assert!(v.effective_ppd() > 30.0);
+
+        // 1x on 2x laptop = 70 * (1/2) = 35
+        let v = presets::srcset_1x_on_laptop();
+        assert!((v.effective_ppd() - 35.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_presets_oversized() {
+        // 2x on 1x desktop = 40 * (2/1) = 80
+        let v = presets::srcset_2x_on_desktop();
+        assert!((v.effective_ppd() - 80.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_presets_all_ordered() {
+        let all = presets::all();
+        assert!(all.len() >= 5);
+
+        // Should be ordered by effective PPD (ascending)
+        for i in 0..all.len() - 1 {
+            assert!(
+                all[i].effective_ppd() <= all[i + 1].effective_ppd(),
+                "Presets should be ordered by effective PPD"
+            );
+        }
     }
 }

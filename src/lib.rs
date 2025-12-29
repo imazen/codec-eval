@@ -35,6 +35,7 @@
 //! - [`corpus`]: Test corpus management
 //! - [`import`]: CSV import for third-party results
 //! - [`stats`]: Statistical analysis and Pareto front
+//! - [`interpolation`]: Quality interpolation and polynomial fitting
 
 pub mod corpus;
 #[cfg(feature = "jpeg-decode")]
@@ -42,6 +43,7 @@ pub mod decode;
 pub mod error;
 pub mod eval;
 pub mod import;
+pub mod interpolation;
 pub mod metrics;
 pub mod stats;
 pub mod viewing;
@@ -57,5 +59,10 @@ pub use import::{CsvImporter, CsvSchema, ExternalResult};
 pub use metrics::{ColorProfile, MetricConfig, MetricResult, PerceptionLevel, xyb_roundtrip};
 pub use stats::{
     ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg,
+    iqr, mean, median, percentile, percentile_u32, std_dev, trimmed_mean,
+};
+pub use interpolation::{
+    GapPolynomial, InterpolationConfig, InterpolationTable,
+    compute_gap_polynomials, fit_gap_polynomial, fit_power_law, linear_interpolate,
 };
 pub use viewing::ViewingCondition;
