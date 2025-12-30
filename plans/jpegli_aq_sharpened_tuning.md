@@ -198,6 +198,40 @@ aq_map.scale(0.25);  // Reduce AQ aggressiveness for sharpened images
 
 Or equivalently, set `aq_strength_multiplier = 0.25` for sharpened content.
 
+## Hybrid Trellis Results (2024-12-29)
+
+### Key Finding: Hybrid Trellis is Even Better
+
+Testing hybrid trellis mode (AQ + mozjpeg trellis quantization) vs AQ-only:
+
+| Mode | Avg BPP (d=1) | Avg DSSIM | Avg RD | vs Standard |
+|------|---------------|-----------|--------|-------------|
+| standard | 2.42 | 0.00074 | 0.00198 | baseline |
+| aq025 | 2.78 | 0.00054 | 0.00137 | 31% better |
+| **hybrid** | 2.90 | 0.00049 | **0.00115** | **42% better** |
+| hybrid_aq025 | 2.84 | 0.00050 | 0.00116 | 41% better |
+
+### Interpretation
+
+1. **Hybrid trellis alone is optimal** - combining with AQ 0.25 doesn't help further
+2. Trellis quantization already optimizes coefficient selection well for sharpened edges
+3. At distance 1.0, hybrid is **42% better** in rate-distortion than standard
+4. At distance 2.0, hybrid is **30% better** than standard
+
+### Updated Recommendation
+
+For sharpened images, prefer hybrid trellis mode:
+```rust
+let result = jpegli::Encoder::new()
+    .width(width)
+    .height(height)
+    .quality(Quality::from_distance(distance))
+    .hybrid_trellis(true)  // Best for sharpened content
+    .encode(pixels)?;
+```
+
+If hybrid is not available, fall back to AQ scale 0.25.
+
 ## Expected Outcomes
 
 1. **Optimal AQ scale for sharpened images** - **CONFIRMED: 0.25x** (not 1.25-1.5x as hypothesized)
