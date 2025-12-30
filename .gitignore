@@ -24,3 +24,7 @@ benchmarks/
 external/
 test_output/
 comparison_outputs/
+
+# Generated corpus images (keep .gitkeep for directory structure)
+corpus/sharpened-800px/*.png
+results/
