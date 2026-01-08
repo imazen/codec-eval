@@ -70,25 +70,42 @@ pub fn calculate_dssim(
     Ok(f64::from(dssim_val))
 }
 
+/// Convert a single sRGB u8 component to linear f32.
+///
+/// Applies the sRGB transfer function (inverse gamma) to convert from
+/// gamma-encoded sRGB to linear light values.
+#[inline]
+fn srgb_to_linear(srgb: u8) -> f32 {
+    let s = f32::from(srgb) / 255.0;
+    if s <= 0.04045 {
+        s / 12.92
+    } else {
+        ((s + 0.055) / 1.055).powf(2.4)
+    }
+}
+
 /// Convert RGB8 image data to the format needed for DSSIM calculation.
+///
+/// Applies proper sRGB-to-linear conversion (inverse gamma) as required
+/// by dssim-core. This matches dssim-core's `ToRGBAPLU::to_rgblu()` behavior.
 ///
 /// # Arguments
 ///
-/// * `data` - RGB8 pixel data in row-major order.
+/// * `data` - RGB8 pixel data in row-major order (sRGB gamma-encoded).
 /// * `width` - Image width in pixels.
 /// * `height` - Image height in pixels.
 ///
 /// # Returns
 ///
-/// An `ImgVec<RGBA<f32>>` suitable for DSSIM calculation.
+/// An `ImgVec<RGBA<f32>>` with linear light values suitable for DSSIM calculation.
 #[must_use]
 pub fn rgb8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<RGBA<f32>> {
     let pixels: Vec<RGBA<f32>> = data
         .chunks_exact(3)
         .map(|rgb| RGBA {
-            r: f32::from(rgb[0]) / 255.0,
-            g: f32::from(rgb[1]) / 255.0,
-            b: f32::from(rgb[2]) / 255.0,
+            r: srgb_to_linear(rgb[0]),
+            g: srgb_to_linear(rgb[1]),
+            b: srgb_to_linear(rgb[2]),
             a: 1.0,
         })
         .collect();
@@ -98,24 +115,27 @@ pub fn rgb8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<R
 
 /// Convert RGBA8 image data to the format needed for DSSIM calculation.
 ///
+/// Applies proper sRGB-to-linear conversion (inverse gamma) for RGB channels.
+/// Alpha channel is normalized linearly (0-255 → 0.0-1.0).
+///
 /// # Arguments
 ///
-/// * `data` - RGBA8 pixel data in row-major order.
+/// * `data` - RGBA8 pixel data in row-major order (sRGB gamma-encoded RGB + linear alpha).
 /// * `width` - Image width in pixels.
 /// * `height` - Image height in pixels.
 ///
 /// # Returns
 ///
-/// An `ImgVec<RGBA<f32>>` suitable for DSSIM calculation.
+/// An `ImgVec<RGBA<f32>>` with linear light RGB values suitable for DSSIM calculation.
 #[must_use]
 pub fn rgba8_to_dssim_image(data: &[u8], width: usize, height: usize) -> ImgVec<RGBA<f32>> {
     let pixels: Vec<RGBA<f32>> = data
         .chunks_exact(4)
         .map(|rgba| RGBA {
-            r: f32::from(rgba[0]) / 255.0,
-            g: f32::from(rgba[1]) / 255.0,
-            b: f32::from(rgba[2]) / 255.0,
-            a: f32::from(rgba[3]) / 255.0,
+            r: srgb_to_linear(rgba[0]),
+            g: srgb_to_linear(rgba[1]),
+            b: srgb_to_linear(rgba[2]),
+            a: f32::from(rgba[3]) / 255.0, // Alpha is linear, not gamma-encoded
         })
         .collect();
 
