@@ -96,16 +96,18 @@ fn encode_mozjpeg(_rgb: &[u8], _width: usize, _height: usize, _quality: u8) -> O
 /// Encode image with jpegli at given quality, return (bpp, butteraugli)
 #[cfg(feature = "jpegli")]
 fn encode_jpegli(rgb: &[u8], width: usize, height: usize, quality: u8) -> Option<(f64, f64)> {
-    use jpegli::encode::Encoder;
-    use jpegli::quant::Quality;
+    use jpegli::encoder::{ChromaSubsampling, EncoderConfig, PixelLayout, Unstoppable};
 
     std::panic::catch_unwind(|| -> Option<(f64, f64)> {
-        let encoder = Encoder::new()
-            .width(width as u32)
-            .height(height as u32)
-            .quality(Quality::from_quality(quality as f32));
+        let config = EncoderConfig::ycbcr(quality, ChromaSubsampling::Quarter)
+            .progressive(true)
+            .optimize_huffman(true);
 
-        let result = encoder.encode(rgb).ok()?;
+        let mut encoder = config
+            .encode_from_bytes(width as u32, height as u32, PixelLayout::Rgb8Srgb)
+            .ok()?;
+        encoder.push_packed(rgb, Unstoppable).ok()?;
+        let result = encoder.finish().ok()?;
 
         // Decode and compute butteraugli
         let img = image::load_from_memory_with_format(&result, image::ImageFormat::Jpeg).ok()?;

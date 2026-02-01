@@ -163,7 +163,11 @@ impl InterpolationTable {
 /// 3. Fit linear regression for a and c
 /// 4. Compute R² and keep best fit
 #[must_use]
-pub fn fit_power_law(points: &[(f64, f64)], config: &InterpolationConfig) -> Option<(f64, f64, f64, f64)> {
+#[allow(clippy::many_single_char_names, clippy::similar_names)] // Standard math notation
+pub fn fit_power_law(
+    points: &[(f64, f64)],
+    config: &InterpolationConfig,
+) -> Option<(f64, f64, f64, f64)> {
     if points.len() < 3 {
         return None;
     }
@@ -459,12 +463,7 @@ mod tests {
     #[test]
     fn test_fit_power_law() {
         // y = 2 * x^1 + 5 (linear)
-        let points = vec![
-            (10.0, 25.0),
-            (20.0, 45.0),
-            (30.0, 65.0),
-            (40.0, 85.0),
-        ];
+        let points = vec![(10.0, 25.0), (20.0, 45.0), (30.0, 65.0), (40.0, 85.0)];
 
         let config = InterpolationConfig::default();
         let fit = fit_power_law(&points, &config);
@@ -501,11 +500,7 @@ mod tests {
     #[test]
     fn test_linear_interpolate() {
         // Decreasing y as x increases (typical quality vs DSSIM)
-        let points = vec![
-            (50, 0.010),
-            (70, 0.005),
-            (90, 0.002),
-        ];
+        let points = vec![(50, 0.010), (70, 0.005), (90, 0.002)];
 
         // Find quality for DSSIM = 0.007 (between 50 and 70)
         let x = linear_interpolate(0.007, &points);
@@ -516,10 +511,7 @@ mod tests {
 
     #[test]
     fn test_linear_interpolate_outside_range() {
-        let points = vec![
-            (50, 0.010),
-            (90, 0.002),
-        ];
+        let points = vec![(50, 0.010), (90, 0.002)];
 
         // Target above range
         let x = linear_interpolate(0.015, &points);

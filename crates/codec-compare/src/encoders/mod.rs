@@ -10,6 +10,10 @@ pub mod avif;
 pub mod jpeg;
 pub mod jpegxl;
 pub mod webp;
+pub mod zenjpeg;
+
+// Re-export JPEG config types
+pub use jpeg::{JpegMode, JpegSubsampling};
 
 use codec_eval::eval::session::{DecodeFn, EncodeFn};
 
@@ -43,6 +47,9 @@ pub fn codec_color(id: &str) -> &'static str {
         "mozjpeg" => "#e74c3c",       // red
         "jpegli" => "#3498db",        // blue
         "libjpeg-turbo" => "#95a5a6", // gray
+
+        // Zenjpeg (hybrid encoder)
+        "zenjpeg" => "#2ecc71", // emerald green
 
         // WebP
         "webp" => "#27ae60", // green

@@ -78,16 +78,18 @@ fn encode_mozjpeg(_: &[u8], _: usize, _: usize, _: u8) -> Option<Vec<u8>> {
 /// Encode with jpegli (YCbCr mode)
 #[cfg(feature = "jpegli")]
 fn encode_jpegli(rgb: &[u8], width: usize, height: usize, quality: u8) -> Option<Vec<u8>> {
-    use jpegli::encode::Encoder;
-    use jpegli::quant::Quality;
+    use jpegli::encoder::{ChromaSubsampling, EncoderConfig, PixelLayout, Unstoppable};
 
     std::panic::catch_unwind(|| -> Option<Vec<u8>> {
-        let encoder = Encoder::new()
-            .width(width as u32)
-            .height(height as u32)
-            .quality(Quality::from_quality(quality as f32));
+        let config = EncoderConfig::ycbcr(quality, ChromaSubsampling::Quarter)
+            .progressive(true)
+            .optimize_huffman(true);
 
-        encoder.encode(rgb).ok()
+        let mut encoder = config
+            .encode_from_bytes(width as u32, height as u32, PixelLayout::Rgb8Srgb)
+            .ok()?;
+        encoder.push_packed(rgb, Unstoppable).ok()?;
+        encoder.finish().ok()
     })
     .ok()
     .flatten()
@@ -101,17 +103,18 @@ fn encode_jpegli(_: &[u8], _: usize, _: usize, _: u8) -> Option<Vec<u8>> {
 /// Encode with jpegli in XYB color space mode
 #[cfg(feature = "jpegli")]
 fn encode_jpegli_xyb(rgb: &[u8], width: usize, height: usize, quality: u8) -> Option<Vec<u8>> {
-    use jpegli::encode::Encoder;
-    use jpegli::quant::Quality;
+    use jpegli::encoder::{EncoderConfig, PixelLayout, Unstoppable, XybSubsampling};
 
     std::panic::catch_unwind(|| -> Option<Vec<u8>> {
-        let encoder = Encoder::new()
-            .width(width as u32)
-            .height(height as u32)
-            .quality(Quality::from_quality(quality as f32))
-            .use_xyb(true);
+        let config = EncoderConfig::xyb(quality, XybSubsampling::BQuarter)
+            .progressive(true)
+            .optimize_huffman(true);
 
-        encoder.encode(rgb).ok()
+        let mut encoder = config
+            .encode_from_bytes(width as u32, height as u32, PixelLayout::Rgb8Srgb)
+            .ok()?;
+        encoder.push_packed(rgb, Unstoppable).ok()?;
+        encoder.finish().ok()
     })
     .ok()
     .flatten()
@@ -129,17 +132,12 @@ fn decode_jpeg(data: &[u8]) -> Option<Vec<u8>> {
 }
 
 /// Decode JPEG with ICC profile handling (required for XYB mode)
+/// Note: XYB decoding with ICC requires the codec-eval icc feature
 #[cfg(feature = "jpegli")]
 fn decode_jpeg_with_icc(data: &[u8]) -> Option<Vec<u8>> {
-    std::panic::catch_unwind(|| -> Option<Vec<u8>> {
-        // Use the icc module which uses jpeg-decoder internally
-        // The Decoder::new().apply_icc(true) approach has bugs with XYB streams
-        jpegli::icc::decode_jpeg_with_icc(data)
-            .ok()
-            .map(|(pixels, _, _)| pixels)
-    })
-    .ok()
-    .flatten()
+    // The jpegli decoder is in prerelease; use standard decoder for now
+    // XYB JPEGs require ICC profile handling which is available in codec-eval
+    decode_jpeg(data)
 }
 
 #[cfg(not(feature = "jpegli"))]

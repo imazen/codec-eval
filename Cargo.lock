@@ -89,6 +89,48 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3d036a3c4ab069c7b410a2ce876bd74808d2d0888a82667669f8e783a898bf1"
 
 [[package]]
+name = "archmage"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe032f6a61574df5bf751f26c70b4f47e181510f43dce688d7a61c6f9252bb49"
+dependencies = [
+ "archmage-macros 0.1.1",
+ "safe_unaligned_simd",
+]
+
+[[package]]
+name = "archmage"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e5778a98b0714014089227472fd4342aacbd581d58ab673cbba6f6bf9fb5b5cd"
+dependencies = [
+ "archmage-macros 0.3.0",
+ "bytemuck",
+]
+
+[[package]]
+name = "archmage-macros"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fbc09b94cc92359220b912c76125426c9cb3311275ce8d686b8106f55d7ba2a0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "archmage-macros"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "80979662181a630a1e7a4f9f25174e990f44fc0c4e534e11c563fee10c9b8a1e"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "arg_enum_proc_macro"
 version = "0.3.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -98,12 +140,6 @@ dependencies = [
  "quote",
  "syn 2.0.111",
 ]
-
-[[package]]
-name = "arrayref"
-version = "0.3.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76a2e8124351fda1ef8aaaa3bbd7ebbcb486bbcd4225aca0aa0d84bb2db8fecb"
 
 [[package]]
 name = "arrayvec"
@@ -183,7 +219,7 @@ version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7109f002c8068b17d531aefc9069a5b44feecea806f8805ad6e05501615b981"
 dependencies = [
- "wide",
+ "wide 0.7.33",
 ]
 
 [[package]]
@@ -331,6 +367,7 @@ dependencies = [
  "codec-eval",
  "csv",
  "dssim-core",
+ "fast-ssim2",
  "image",
  "imgref",
  "jpegli-rs",
@@ -347,6 +384,7 @@ dependencies = [
  "thiserror 2.0.17",
  "webp",
  "which",
+ "zenjpeg",
 ]
 
 [[package]]
@@ -359,7 +397,6 @@ dependencies = [
  "dssim-core",
  "imgref",
  "jpeg-decoder",
- "jpegli-rs",
  "moxcms",
  "rayon",
  "rgb",
@@ -547,6 +584,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "48c757948c5ede0e46177b7add2e67155f70e33c07fea8284df6576da70b3719"
 
 [[package]]
+name = "enough"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65641ff0923e45cf34a4cb0115080cb7fc8bf4fd419c2207670d5722bab4c581"
+
+[[package]]
 name = "env_home"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -589,6 +632,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "fast-ssim2"
+version = "0.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "811098f0237594af3d5bf833d9cbc7bb4becb6154ec779f132d0ef69068d0535"
+dependencies = [
+ "imgref",
+ "multiversion 0.7.4",
+ "num-traits",
+ "safe_unaligned_simd",
+ "thiserror 2.0.17",
+ "wide 1.1.1",
+ "yuvxyb",
+ "yuvxyb-math",
+]
+
+[[package]]
 name = "fastrand"
 version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -624,33 +683,6 @@ name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
-
-[[package]]
-name = "foreign-types"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d737d9aa519fb7b749cbc3b962edcf310a8dd1f4b67c91c4f83975dbdd17d965"
-dependencies = [
- "foreign-types-macros",
- "foreign-types-shared",
-]
-
-[[package]]
-name = "foreign-types-macros"
-version = "0.2.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1a5c6c585bc94aaf2c7b51dd4c2ba22680844aba4c687be581871a6f518c5742"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.111",
-]
-
-[[package]]
-name = "foreign-types-shared"
-version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
 name = "getrandom"
@@ -827,17 +859,24 @@ dependencies = [
 
 [[package]]
 name = "jpegli-rs"
-version = "0.2.1"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fd683f195c589e571e752ba48c1ab0f1acba6c1c0a5acfc35de8bd8820c4883a"
 dependencies = [
- "arrayref",
- "butteraugli",
+ "aligned-vec",
+ "archmage 0.1.3",
  "bytemuck",
+ "enough",
  "imgref",
- "jpeg-decoder",
- "lcms2",
- "multiversion",
+ "linear-srgb",
+ "multiversed",
+ "multiversion 0.8.0",
  "rgb",
- "wide",
+ "thiserror 2.0.17",
+ "tinyvec",
+ "whereat",
+ "wide 1.1.1",
+ "yuv",
 ]
 
 [[package]]
@@ -880,29 +919,6 @@ checksum = "464a3709c7f55f1f721e5389aa6ea4e3bc6aba669353300af094b29ffbdde1d8"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
-]
-
-[[package]]
-name = "lcms2"
-version = "6.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b75877b724685dd49310bdbadbf973fc69b1d01992a6d4a861b928fc3943f87b"
-dependencies = [
- "bytemuck",
- "foreign-types",
- "lcms2-sys",
-]
-
-[[package]]
-name = "lcms2-sys"
-version = "4.0.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1c2604b23848ca80b2add60f0fb2270fd980e622c25029b6597fa01cfd5f8d5f"
-dependencies = [
- "cc",
- "dunce",
- "libc",
- "pkg-config",
 ]
 
 [[package]]
@@ -962,6 +978,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "libm"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
+
+[[package]]
 name = "libwebp-sys"
 version = "0.9.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -969,6 +991,19 @@ checksum = "54cd30df7c7165ce74a456e4ca9732c603e8dc5e60784558c1c6dc047f876733"
 dependencies = [
  "cc",
  "glob",
+]
+
+[[package]]
+name = "linear-srgb"
+version = "0.3.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "153732436b90b689934ad2d2997d5f0d2416163017ac76e6c0475dce9e7999c3"
+dependencies = [
+ "bytemuck",
+ "multiversed",
+ "multiversion 0.8.0",
+ "num-traits",
+ "wide 1.1.1",
 ]
 
 [[package]]
@@ -990,6 +1025,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0fae87c125b03c1d2c0150c90365d7d6bcc53fb73a9acaef207d2d065860f062"
 dependencies = [
  "imgref",
+]
+
+[[package]]
+name = "magetypes"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "79bcaaebc5420c1dfb6a2db979cf86c7f852fea4013de3920d0f0395ac9ea5a7"
+dependencies = [
+ "archmage 0.3.0",
+ "bytemuck",
 ]
 
 [[package]]
@@ -1054,12 +1099,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "multiversed"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "31eede710ee60ecb1708685a9d948d25a67ee3940ee8a1096431590cb21eef7d"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "multiversion"
 version = "0.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4851161a11d3ad0bf9402d90ffc3967bf231768bfd7aeb61755ad06dbf1a142"
 dependencies = [
- "multiversion-macros",
+ "multiversion-macros 0.7.4",
+ "target-features",
+]
+
+[[package]]
+name = "multiversion"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7edb7f0ff51249dfda9ab96b5823695e15a052dc15074c9dbf3d118afaf2c201"
+dependencies = [
+ "multiversion-macros 0.8.0",
  "target-features",
 ]
 
@@ -1072,6 +1138,18 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+ "target-features",
+]
+
+[[package]]
+name = "multiversion-macros"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b093064383341eb3271f42e381cb8f10a01459478446953953c75d24bd339fc0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
  "target-features",
 ]
 
@@ -1163,6 +1241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
+ "libm",
 ]
 
 [[package]]
@@ -1416,6 +1495,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "safe_arch"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f7caad094bd561859bcd467734a720c3c1f5d1f338995351fefe2190c45efed"
+dependencies = [
+ "bytemuck",
+]
+
+[[package]]
+name = "safe_unaligned_simd"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f11527e0e2ceae04eb620ca18696f297fc9aa6d5b6b60bd15bd68179d0b39cc"
+
+[[package]]
 name = "scan_fmt"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1620,6 +1714,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "tinyvec"
+version = "1.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bfa5fdc3bce6191a1dbc8c02d5c8bffcf557bafa17c124c5264a458f1b0613fa"
+dependencies = [
+ "tinyvec_macros",
+]
+
+[[package]]
+name = "tinyvec_macros"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
+
+[[package]]
 name = "toml"
 version = "0.8.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1753,6 +1862,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "whereat"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ec598a1ade4224cfe3c5dace0d5d7deec9ed670503ff99d4946973c8c094534"
+
+[[package]]
 name = "which"
 version = "7.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1771,7 +1886,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ce5da8ecb62bcd8ec8b7ea19f69a51275e91299be594ea5cc6ef7819e16cd03"
 dependencies = [
  "bytemuck",
- "safe_arch",
+ "safe_arch 0.7.4",
+]
+
+[[package]]
+name = "wide"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac11b009ebeae802ed758530b6496784ebfee7a87b9abfbcaf3bbe25b814eb25"
+dependencies = [
+ "bytemuck",
+ "safe_arch 1.0.0",
 ]
 
 [[package]]
@@ -1864,6 +1989,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f17a85883d4e6d00e8a97c586de764dabcc06133f7f1d55dce5cdc070ad7fe59"
 
 [[package]]
+name = "yuv"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28f1bad143caadcfcaec93039dc9c40a30fc86f23d9e7cc03764a39fe51d9d43"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "yuvxyb"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1881,6 +2015,30 @@ name = "yuvxyb-math"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "453f24cf9e21be2148954a438c72fb999da42b1d128105bfd73ce91e1c6c7d33"
+
+[[package]]
+name = "zenjpeg"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0f37de59c81ebf465681e864f8cdbd4e2dffd345ae8447f33cd8284495c7bd52"
+dependencies = [
+ "aligned-vec",
+ "archmage 0.3.0",
+ "bytemuck",
+ "enough",
+ "imgref",
+ "linear-srgb",
+ "magetypes",
+ "multiversed",
+ "multiversion 0.8.0",
+ "rgb",
+ "safe_unaligned_simd",
+ "thiserror 2.0.17",
+ "tinyvec",
+ "whereat",
+ "wide 1.1.1",
+ "yuv",
+]
 
 [[package]]
 name = "zerocopy"

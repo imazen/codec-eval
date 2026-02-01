@@ -169,16 +169,20 @@ impl CodecRegistry {
         }
     }
 
-    /// Register JPEG codecs.
+    /// Register JPEG codecs (all variants: 420/444, progressive/baseline).
     pub fn register_jpeg(&mut self) {
-        let mozjpeg = encoders::jpeg::MozJpegCodec::new();
-        if mozjpeg.is_available() {
-            self.register_codec(Box::new(mozjpeg));
+        // Register all MozJPEG variants
+        for codec in encoders::jpeg::MozJpegCodec::all_variants() {
+            if codec.is_available() {
+                self.register_codec(Box::new(codec));
+            }
         }
 
-        let jpegli = encoders::jpeg::JpegliCodec::new();
-        if jpegli.is_available() {
-            self.register_codec(Box::new(jpegli));
+        // Register all jpegli variants
+        for codec in encoders::jpeg::JpegliCodec::all_variants() {
+            if codec.is_available() {
+                self.register_codec(Box::new(codec));
+            }
         }
     }
 

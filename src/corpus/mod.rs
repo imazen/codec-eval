@@ -145,7 +145,7 @@ impl Corpus {
     /// # Arguments
     /// * `path` - Local path for the corpus
     /// * `url` - Optional remote URL (defaults to codec-corpus)
-    /// * `subsets` - Optional list of subsets to download (e.g., ["kodak", "clic2025"])
+    /// * `subsets` - Optional list of subsets to download (e.g., `["kodak", "clic2025"]`)
     ///
     /// # Example
     /// ```rust,ignore
@@ -173,13 +173,17 @@ impl Corpus {
         }
 
         // Need to download
-        eprintln!("Corpus not found at {}, downloading from {}", path.display(), url);
+        eprintln!(
+            "Corpus not found at {}, downloading from {}",
+            path.display(),
+            url
+        );
 
         // Use sparse checkout for efficiency
         let sparse = if let Some(subsets) = subsets {
             let checkout = SparseCheckout::clone_shallow(url, path, 1)?;
             // Add subset directories
-            let paths: Vec<&str> = subsets.iter().copied().collect();
+            let paths: Vec<&str> = subsets.to_vec();
             checkout.add_paths(&paths)?;
             checkout.checkout()?;
             checkout

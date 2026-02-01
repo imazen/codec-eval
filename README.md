@@ -1,5 +1,8 @@
 # Codec Comparison Guide
 
+[![CI](https://github.com/imazen/codec-eval/actions/workflows/ci.yml/badge.svg)](https://github.com/imazen/codec-eval/actions/workflows/ci.yml)
+[![License: MIT OR Apache-2.0](https://img.shields.io/badge/License-MIT%20OR%20Apache--2.0-blue.svg)](LICENSE)
+
 A practical guide to comparing image codecs fairly, with metrics accuracy data, viewing condition considerations, and scientific methodology.
 
 ## For Codec Developers

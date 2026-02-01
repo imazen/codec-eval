@@ -56,13 +56,13 @@ pub use eval::{
     session::{EvalConfig, EvalSession, ImageData},
 };
 pub use import::{CsvImporter, CsvSchema, ExternalResult};
+pub use interpolation::{
+    GapPolynomial, InterpolationConfig, InterpolationTable, compute_gap_polynomials,
+    fit_gap_polynomial, fit_power_law, linear_interpolate,
+};
 pub use metrics::{ColorProfile, MetricConfig, MetricResult, PerceptionLevel, xyb_roundtrip};
 pub use stats::{
-    ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg,
-    iqr, mean, median, percentile, percentile_u32, std_dev, trimmed_mean,
+    ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg, iqr, mean,
+    median, percentile, percentile_u32, std_dev, trimmed_mean,
 };
-pub use interpolation::{
-    GapPolynomial, InterpolationConfig, InterpolationTable,
-    compute_gap_polynomials, fit_gap_polynomial, fit_power_law, linear_interpolate,
-};
-pub use viewing::{ViewingCondition, SimulationMode, SimulationParams, REFERENCE_PPD};
+pub use viewing::{REFERENCE_PPD, SimulationMode, SimulationParams, ViewingCondition};

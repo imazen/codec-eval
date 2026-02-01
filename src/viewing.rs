@@ -241,7 +241,12 @@ impl ViewingCondition {
     /// assert!(params.adjusted_ppd < 40.0);  // Adjusted for missing upscale
     /// ```
     #[must_use]
-    pub fn simulation_params(&self, image_width: u32, image_height: u32, mode: SimulationMode) -> SimulationParams {
+    pub fn simulation_params(
+        &self,
+        image_width: u32,
+        image_height: u32,
+        mode: SimulationMode,
+    ) -> SimulationParams {
         let ratio = self.srcset_ratio();
         let base_ppd = self.acuity_ppd;
 
@@ -435,7 +440,8 @@ impl SimulationParams {
             // Lower PPD: need higher scores
             // 90 at 40 PPD → 95 at 20 PPD
             base_threshold + (100.0 - base_threshold) * (1.0 / multiplier - 1.0)
-        }.clamp(0.0, 100.0)
+        }
+        .clamp(0.0, 100.0)
     }
 
     /// Check if a DSSIM value is acceptable for this viewing condition.
@@ -609,14 +615,14 @@ pub mod presets {
     #[must_use]
     pub fn all() -> Vec<ViewingCondition> {
         vec![
-            srcset_1x_on_phone(),    // ~32 PPD - most demanding
-            srcset_1x_on_laptop(),   // 35 PPD
-            native_desktop(),        // 40 PPD
-            srcset_2x_on_phone(),    // ~63 PPD
-            native_laptop(),         // 70 PPD
-            srcset_2x_on_desktop(),  // 80 PPD
+            srcset_1x_on_phone(),       // ~32 PPD - most demanding
+            srcset_1x_on_laptop(),      // 35 PPD
+            native_desktop(),           // 40 PPD
+            srcset_2x_on_phone(),       // ~63 PPD
+            native_laptop(),            // 70 PPD
+            srcset_2x_on_desktop(),     // 80 PPD
             srcset_2x_on_laptop_1_5x(), // ~93 PPD
-            native_phone(),          // 95 PPD - least demanding
+            native_phone(),             // 95 PPD - least demanding
         ]
     }
 
@@ -625,11 +631,7 @@ pub mod presets {
     /// Covers the main device types at native resolution.
     #[must_use]
     pub fn key() -> Vec<ViewingCondition> {
-        vec![
-            native_desktop(),
-            native_laptop(),
-            native_phone(),
-        ]
+        vec![native_desktop(), native_laptop(), native_phone()]
     }
 
     /// Baseline condition for quality mapping (native laptop).
