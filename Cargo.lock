@@ -363,6 +363,8 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "butteraugli",
+ "bytemuck",
+ "chrono",
  "clap",
  "codec-eval",
  "csv",

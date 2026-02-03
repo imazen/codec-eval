@@ -18,9 +18,15 @@
 
 pub mod chart;
 mod pareto;
+pub mod rd_knee;
 
 pub use chart::{ChartConfig, ChartPoint, ChartSeries, generate_svg};
 pub use pareto::{ParetoFront, RDPoint};
+pub use rd_knee::{
+    AngleBin, AxisRange, BinScheme, CodecConfig, ConfiguredParetoFront, ConfiguredRDPoint,
+    CorpusAggregate, DualAngleBin, EncodeResult, FixedFrame, NormalizationContext, ParamValue,
+    QualityDirection, RDCalibration, RDKnee, RDPosition, plot_rd_svg,
+};
 
 use serde::{Deserialize, Serialize};
 
