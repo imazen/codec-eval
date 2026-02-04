@@ -16,16 +16,19 @@
 //!
 //! ## Corner angle
 //!
-//! `θ = atan2(quality_norm, 1.0 - bpp_norm)`
+//! `θ = atan2(quality_norm * aspect, 1.0 - bpp_norm)`
 //!
+//! The aspect ratio is calibrated from the reference codec knee
+//! (mozjpeg 4:2:0 on CID22) so that the knee lands at exactly 45°.
+//!
+//! - θ < 0°  → worse than the worst corner (negative quality)
 //! - θ = 0°  → worst corner (max bpp, zero quality)
-//! - θ = 45° → ideal diagonal (zero bpp, perfect quality)
+//! - θ < 45° → compression-efficient (below the knee)
+//! - θ = 45° → reference knee (balanced tradeoff)
+//! - θ ≈ 52° → ideal diagonal (zero bpp, perfect quality)
+//! - θ > 52° → quality-dominated (spending bits for diminishing returns)
 //! - θ = 90° → no compression (max bpp, max quality)
-//!
-//! The [0°, 45°) range is compression-efficient: gaining quality while
-//! saving bits. The (45°, 90°] range is quality-dominated: spending
-//! more bits for diminishing quality returns. The R-D curve knee
-//! typically falls in the 20°–40° range.
+//! - θ > 90° → over-budget (bpp exceeds frame ceiling)
 //!
 //! The **knee** (45° tangent on the corpus-aggregate curve) is a landmark
 //! within this system, not the origin. Its angle tells you where the
@@ -47,8 +50,9 @@ use std::fmt::Write as _;
 
 /// Fixed normalization frame for web-targeted R-D analysis.
 ///
-/// Uses metric-native scales so angles are comparable across codecs
-/// and corpora without per-run normalization.
+/// Uses metric-native scales and an aspect ratio calibrated so the
+/// reference knee (mozjpeg 4:2:0 on CID22) lands at exactly 45 degrees.
+/// Angles are comparable across codecs and corpora.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
 pub struct FixedFrame {
     /// Maximum bpp (practical ceiling). Default: 4.0 for web.
@@ -57,38 +61,47 @@ pub struct FixedFrame {
     pub s2_max: f64,
     /// Butteraugli practical worst-case. Default: 15.0.
     pub ba_max: f64,
+    /// Quality-axis stretch factor. Calibrated from reference knee so
+    /// that `atan2(q_norm * aspect, 1 - bpp_norm) = 45 deg` at the knee.
+    pub aspect: f64,
 }
 
 impl FixedFrame {
     /// Standard web-targeting frame.
+    ///
+    /// Aspect ratio calibrated from CID22-training mozjpeg 4:2:0 s2 knee
+    /// at (0.7274 bpp, s2=65.10):
+    /// `aspect = (1 - 0.7274/4.0) / (65.10/100.0) = 1.2568`
     pub const WEB: Self = Self {
         bpp_max: 4.0,
         s2_max: 100.0,
         ba_max: 15.0,
+        aspect: (1.0 - 0.7274 / 4.0) / (65.10 / 100.0),
     };
 
     /// Compute the corner angle for an SSIMULACRA2 measurement.
     ///
-    /// Origin is the worst corner: (bpp_max, s2=0) = normalized (1.0, 0.0).
-    /// Angle is measured from this corner toward (0, s2_max).
-    ///
-    /// Returns degrees in [0, 90] for valid encodes.
+    /// Origin is the worst corner: (bpp_max, s2=0).
+    /// The aspect ratio stretches the quality axis so the reference
+    /// knee is at 45 degrees. Angles can exceed 90 degrees or go
+    /// below 0 degrees for extreme encodes.
     #[must_use]
     pub fn s2_angle(&self, bpp: f64, s2: f64) -> f64 {
-        let bpp_norm = (bpp / self.bpp_max).clamp(0.0, 1.0);
-        let s2_norm = (s2.max(0.0) / self.s2_max).clamp(0.0, 1.0);
-        s2_norm.atan2(1.0 - bpp_norm).to_degrees()
+        let bpp_norm = bpp / self.bpp_max;
+        let s2_norm = s2 / self.s2_max;
+        (s2_norm * self.aspect).atan2(1.0 - bpp_norm).to_degrees()
     }
 
     /// Compute the corner angle for a Butteraugli measurement.
     ///
     /// Butteraugli is inverted: lower = better. We normalize so that
-    /// ba=0 → quality_norm=1.0, ba=ba_max → quality_norm=0.0.
+    /// ba=0 means quality_norm=1.0, ba=ba_max means quality_norm=0.0.
+    /// Same aspect ratio as s2 for comparable dual-angle analysis.
     #[must_use]
     pub fn ba_angle(&self, bpp: f64, ba: f64) -> f64 {
-        let bpp_norm = (bpp / self.bpp_max).clamp(0.0, 1.0);
-        let ba_norm = (1.0 - (ba.max(0.0) / self.ba_max)).clamp(0.0, 1.0);
-        ba_norm.atan2(1.0 - bpp_norm).to_degrees()
+        let bpp_norm = bpp / self.bpp_max;
+        let ba_norm = 1.0 - ba / self.ba_max;
+        (ba_norm * self.aspect).atan2(1.0 - bpp_norm).to_degrees()
     }
 
     /// Compute dual-angle position for an encode.
@@ -1096,15 +1109,17 @@ mod tests {
         let f = FixedFrame::WEB;
         // Worst corner: (bpp_max, 0) → atan2(0, 0) ≈ 0°
         assert!(f.s2_angle(4.0, 0.0).abs() < 0.01);
-        // Ideal diagonal: (0, s2_max) → atan2(1, 1) = 45°
-        // (equal normalized displacement on both axes)
-        assert!((f.s2_angle(0.0, 100.0) - 45.0).abs() < 0.01);
-        // Balanced: bpp_norm=0.5, s2_norm=0.5 → atan2(0.5, 0.5) = 45°
-        assert!((f.s2_angle(2.0, 50.0) - 45.0).abs() < 0.01);
-        // No compression: (bpp_max, s2_max) → atan2(1, 0) = 90°
+        // Ideal diagonal: (0, s2_max) → atan2(1*aspect, 1) ≈ 51.5°
+        let ideal = f.s2_angle(0.0, 100.0);
+        assert!(ideal > 50.0 && ideal < 53.0, "ideal angle: {ideal}");
+        // Reference knee: (0.7274, 65.10) → exactly 45°
+        assert!((f.s2_angle(0.7274, 65.10) - 45.0).abs() < 0.1);
+        // No compression: (bpp_max, s2_max) → atan2(aspect, 0) = 90°
         assert!((f.s2_angle(4.0, 100.0) - 90.0).abs() < 0.01);
-        // Quality-heavy: high bpp, high quality → approaching 90°
-        assert!(f.s2_angle(3.5, 90.0) > 75.0);
+        // Negative s2 → negative angle (allowed)
+        assert!(f.s2_angle(2.0, -10.0) < 0.0);
+        // Over-budget bpp → angle > 90° (allowed)
+        assert!(f.s2_angle(5.0, 50.0) > 90.0);
     }
 
     #[test]
@@ -1112,19 +1127,24 @@ mod tests {
         let f = FixedFrame::WEB;
         // Worst corner: (bpp_max, ba_max) → ba_norm=0, atan2(0, 0) = 0°
         assert!(f.ba_angle(4.0, 15.0).abs() < 0.01);
-        // Ideal diagonal: (0, ba=0) → ba_norm=1, atan2(1, 1) = 45°
-        assert!((f.ba_angle(0.0, 0.0) - 45.0).abs() < 0.01);
+        // Ideal diagonal: (0, ba=0) → ba_norm=1, atan2(aspect, 1) ≈ 51.5°
+        let ideal = f.ba_angle(0.0, 0.0);
+        assert!(ideal > 50.0 && ideal < 53.0, "ba ideal angle: {ideal}");
     }
 
     #[test]
     fn test_fixed_frame_comparable() {
         let f = FixedFrame::WEB;
-        // Two encodes with same q_norm/(1-bpp_norm) ratio → same angle
-        // At 45°, the ratio is 1.0, so q_norm = 1 - bpp_norm
-        let a = f.s2_angle(1.0, 75.0); // bpp_norm=0.25, s2_norm=0.75, ratio=1
-        let b = f.s2_angle(2.0, 50.0); // bpp_norm=0.50, s2_norm=0.50, ratio=1
-        assert!((a - 45.0).abs() < 0.5);
-        assert!((b - 45.0).abs() < 0.5);
+        // Two encodes with same q_norm*aspect/(1-bpp_norm) ratio → same angle
+        // At the reference knee: ratio = 1.0 → 45°
+        let a = f.s2_angle(0.7274, 65.10); // the reference knee
+        assert!((a - 45.0).abs() < 0.1);
+        // Same proportional tradeoff at a different scale
+        // s2_norm * aspect / (1 - bpp_norm) should be the same ratio
+        // At knee: 0.651 * 1.257 / 0.818 = 1.0
+        // At (2.0, 50.0): 0.50 * 1.257 / 0.50 = 1.257 → angle > 45°
+        let b = f.s2_angle(2.0, 50.0);
+        assert!(b > 45.0, "should be above knee: {b}");
     }
 
     #[test]
@@ -1218,21 +1238,22 @@ mod tests {
     #[test]
     fn test_defaults_knee_angles() {
         let cal = defaults::mozjpeg_cid22();
-        // Both knees should be in the compression-efficient zone (30-45°)
+        // s2 knee should be at exactly 45° (this is the reference knee)
         assert!(
-            cal.ssimulacra2.fixed_angle > 30.0 && cal.ssimulacra2.fixed_angle < 45.0,
-            "s2 knee angle {:.1}° outside expected 30-45° range",
+            (cal.ssimulacra2.fixed_angle - 45.0).abs() < 0.5,
+            "s2 knee angle {:.1}° should be ~45°",
             cal.ssimulacra2.fixed_angle
         );
+        // ba knee should be near 45° but not necessarily exact
         assert!(
-            cal.butteraugli.fixed_angle > 30.0 && cal.butteraugli.fixed_angle < 45.0,
-            "ba knee angle {:.1}° outside expected 30-45° range",
+            cal.butteraugli.fixed_angle > 40.0 && cal.butteraugli.fixed_angle < 55.0,
+            "ba knee angle {:.1}° outside expected 40-55° range",
             cal.butteraugli.fixed_angle
         );
-        // Both knees should be within 5° of each other for mozjpeg
+        // Both knees should be within 10° of each other for mozjpeg
         let diff = (cal.ssimulacra2.fixed_angle - cal.butteraugli.fixed_angle).abs();
         assert!(
-            diff < 5.0,
+            diff < 10.0,
             "knee angle difference {:.1}° too large (s2={:.1}°, ba={:.1}°)",
             diff, cal.ssimulacra2.fixed_angle, cal.butteraugli.fixed_angle
         );
@@ -1312,10 +1333,10 @@ mod tests {
         // Dominated point should be removed
         assert_eq!(front.points.len(), 3);
 
-        // All angles should be in [0, 90]
+        // All angles should be positive for these well-behaved test points
         for p in &front.points {
-            assert!(p.position.theta_s2 >= 0.0 && p.position.theta_s2 <= 90.0);
-            assert!(p.position.theta_ba >= 0.0 && p.position.theta_ba <= 90.0);
+            assert!(p.position.theta_s2 > 0.0, "s2 angle: {}", p.position.theta_s2);
+            assert!(p.position.theta_ba > 0.0, "ba angle: {}", p.position.theta_ba);
         }
 
         let best = front.best_config_for_s2(70.0).unwrap();
