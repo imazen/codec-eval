@@ -103,6 +103,7 @@ fn mixed_cube(v: f32) -> f32 {
 }
 
 /// Convert linear RGB to XYB color space.
+#[allow(clippy::many_single_char_names)] // x, y, b, r, g are standard color channel names
 fn linear_rgb_to_xyb(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
     // Apply opsin absorbance matrix
     let m = &XYB_OPSIN_ABSORBANCE_MATRIX;
@@ -131,6 +132,7 @@ fn linear_rgb_to_xyb(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
 }
 
 /// Convert XYB to linear RGB.
+#[allow(clippy::many_single_char_names)] // x, y, b, r, g are standard color channel names
 fn xyb_to_linear_rgb(x: f32, y: f32, b: f32) -> (f32, f32, f32) {
     let neg_bias = &XYB_NEG_OPSIN_ABSORBANCE_BIAS_CBRT;
 

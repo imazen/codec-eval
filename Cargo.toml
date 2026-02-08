@@ -73,6 +73,8 @@ tempfile.workspace = true
 
 [lints.rust]
 unsafe_code = "warn"
+# Allow deprecated API usage temporarily (butteraugli old API, to be updated)
+deprecated = "allow"
 
 [lints.clippy]
 all = { level = "warn", priority = -1 }
@@ -90,6 +92,8 @@ cast_precision_loss = "allow"
 cast_possible_truncation = "allow"
 cast_sign_loss = "allow"
 cast_lossless = "allow"
+# Allow float comparisons in tests (exact comparisons are intentional)
+float_cmp = "allow"
 # Allow these style choices
 if_not_else = "allow"
 redundant_closure_for_method_calls = "allow"
