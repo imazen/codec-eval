@@ -237,7 +237,51 @@ fn setup_test_corpus() -> anyhow::Result<()> {
 
 ## Quality Assertions for CI
 
-### Threshold-Based Testing
+### Quick Quality Checks (New in 0.3)
+
+For simple tests without full corpus evaluation:
+
+```rust
+use codec_eval::{assert_quality, assert_perception_level, PerceptionLevel};
+use codec_eval::metrics::prelude::*;
+
+#[test]
+fn test_encoding_quality() -> Result<(), Box<dyn std::error::Error>> {
+    // Load test image
+    let original = load_png_as_rgb8("test.png")?;
+    let (width, height) = (original.width(), original.height());
+
+    // Encode at quality 80
+    let encoded_bytes = my_codec::encode(&original, 80)?;
+    let decoded = my_codec::decode(&encoded_bytes)?;
+
+    // Convert to ImgVec<RGB8>
+    let reference = ImgVec::new(original, width, height);
+    let distorted = ImgVec::new(decoded, width, height);
+
+    // Option 1: Specific thresholds
+    assert_quality(&reference, &distorted,
+        Some(80.0),   // min SSIMULACRA2 score
+        Some(0.003)   // max DSSIM
+    )?;
+
+    // Option 2: Semantic quality levels
+    assert_perception_level(&reference, &distorted,
+        PerceptionLevel::Subtle  // DSSIM < 0.0015
+    )?;
+
+    Ok(())
+}
+```
+
+**Perception Levels** (based on DSSIM):
+- `Imperceptible` - DSSIM < 0.0003 (requires near-lossless)
+- `Marginal` - DSSIM < 0.0007 (excellent quality)
+- `Subtle` - DSSIM < 0.0015 (high quality, suitable for most use cases)
+- `Noticeable` - DSSIM < 0.003 (acceptable quality)
+- `Degraded` - DSSIM ≥ 0.003 (visible artifacts)
+
+### Full Corpus Evaluation
 
 ```rust
 use codec_eval::metrics::PerceptionLevel;
@@ -263,6 +307,81 @@ fn test_quality_at_q80() {
     }
 }
 ```
+
+### Migrating from Direct Metric Usage
+
+If you're currently using dssim-core, butteraugli, or fast-ssim2 directly in your tests, codec-eval 0.3 can simplify your code significantly.
+
+**Before** (manual metric setup):
+```rust
+use dssim_core::Dssim;
+use rgb::RGBA;
+
+fn compute_dssim(orig: &[u8], comp: &[u8], width: usize, height: usize) -> f64 {
+    let attr = Dssim::new();
+
+    // Manual RGBA conversion
+    let orig_rgba: Vec<RGBA<u8>> = orig
+        .chunks(3)
+        .map(|c| RGBA::new(c[0], c[1], c[2], 255))
+        .collect();
+    let comp_rgba: Vec<RGBA<u8>> = comp
+        .chunks(3)
+        .map(|c| RGBA::new(c[0], c[1], c[2], 255))
+        .collect();
+
+    let orig_img = attr.create_image_rgba(&orig_rgba, width, height).unwrap();
+    let comp_img = attr.create_image_rgba(&comp_rgba, width, height).unwrap();
+
+    let (dssim, _) = attr.compare(&orig_img, comp_img);
+    dssim.into()
+}
+
+#[test]
+fn test_quality() {
+    let (orig, width, height) = load_test_image();
+    let encoded = encode(&orig, width, height, 80);
+    let decoded = decode(&encoded);
+
+    let dssim = compute_dssim(&orig, &decoded, width, height);
+    assert!(dssim < 0.003, "Quality too low: DSSIM {}", dssim);
+}
+```
+
+**After** (codec-eval helpers):
+```rust
+use codec_eval::{assert_quality, metrics::prelude::*};
+
+#[test]
+fn test_quality() -> Result<(), Box<dyn std::error::Error>> {
+    let (orig, width, height) = load_test_image();
+    let encoded = encode(&orig, width, height, 80);
+    let decoded = decode(&encoded);
+
+    // Convert to ImgVec<RGB8>
+    let reference = ImgVec::new(
+        orig.chunks_exact(3)
+            .map(|c| RGB8::new(c[0], c[1], c[2]))
+            .collect(),
+        width, height
+    );
+    let distorted = ImgVec::new(
+        decoded.chunks_exact(3)
+            .map(|c| RGB8::new(c[0], c[1], c[2]))
+            .collect(),
+        width, height
+    );
+
+    assert_quality(&reference, &distorted, Some(80.0), Some(0.003))?;
+    Ok(())
+}
+```
+
+**Benefits:**
+- ~10 lines vs 30+ lines per test
+- Unified imports via `metrics::prelude`
+- Single dependency instead of 3+ metric crates
+- Consistent metric versions across projects
 
 ### Regression Testing Against Baseline
 

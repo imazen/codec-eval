@@ -46,12 +46,45 @@ let report = session.evaluate_corpus("./test_images")?;
 ```
 
 **Features:**
-- DSSIM and PSNR metrics (SSIMULACRA2 planned)
+- DSSIM, Butteraugli, and SSIMULACRA2 metrics (PSNR for legacy comparisons)
 - Viewing condition modeling (desktop, mobile, retina)
 - Corpus management with sparse checkout for large repos
 - CSV import for third-party benchmark results
 - Pareto front analysis and BD-Rate calculation
 - JSON/CSV report generation
+- Optional: SVG charts, polynomial interpolation
+
+### Quick Quality Checks (New in 0.3)
+
+For simple tests without full corpus evaluation:
+
+```rust
+use codec_eval::{assert_quality, metrics::prelude::*};
+
+// Load images
+let reference = ImgVec::new(/* ... */, width, height);
+let encoded = ImgVec::new(/* ... */, width, height);
+
+// Assert quality thresholds
+assert_quality(&reference, &encoded,
+    Some(80.0),   // min SSIMULACRA2 score
+    Some(0.003)   // max DSSIM
+)?;
+
+// Or use semantic levels
+assert_perception_level(&reference, &encoded,
+    PerceptionLevel::Imperceptible  // DSSIM < 0.0003
+)?;
+```
+
+**Unified imports** via `metrics::prelude`:
+```rust
+use codec_eval::metrics::prelude::*;
+// Now have: Dssim, butteraugli, compute_ssimulacra2,
+//           ImgRef, ImgVec, RGB8, RGBA8, etc.
+```
+
+See [INTEGRATION.md](INTEGRATION.md) for detailed examples.
 
 ---
 
