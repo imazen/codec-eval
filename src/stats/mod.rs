@@ -16,10 +16,12 @@
 //! - [`bd_rate`]: Bjontegaard Delta Rate calculation
 //! - [`ParetoFront`]: Pareto-optimal points on RD curve
 
+#[cfg(feature = "chart")]
 pub mod chart;
 mod pareto;
 pub mod rd_knee;
 
+#[cfg(feature = "chart")]
 pub use chart::{ChartConfig, ChartPoint, ChartSeries, generate_svg};
 pub use pareto::{ParetoFront, RDPoint};
 pub use rd_knee::{

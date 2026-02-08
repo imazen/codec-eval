@@ -43,8 +43,8 @@ name = "rd-calibrate"
 path = "src/rd_calibrate.rs"
 
 [dependencies]
-# Core library
-codec-eval = { path = "../.." }
+# Core library (with chart and interpolation features for advanced analysis)
+codec-eval = { path = "../..", features = ["chart", "interpolation"] }
 
 # Image handling
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }

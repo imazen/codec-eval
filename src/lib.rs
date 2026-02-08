@@ -43,26 +43,58 @@ pub mod decode;
 pub mod error;
 pub mod eval;
 pub mod import;
+#[cfg(feature = "interpolation")]
 pub mod interpolation;
 pub mod metrics;
 pub mod stats;
 pub mod viewing;
 
-// Re-export commonly used types
-pub use corpus::{Corpus, CorpusImage, ImageCategory, SparseCheckout, SparseFilter, SparseStatus};
+// Re-export commonly used types for codec evaluation
+pub use corpus::{Corpus, CorpusImage, ImageCategory};
 pub use error::{Error, Result};
 pub use eval::{
-    report::{CodecResult, CorpusReport, ImageReport},
-    session::{EvalConfig, EvalSession, ImageData},
+    // Evaluation helpers (lightweight API for zen* projects)
+    assert_perception_level, assert_quality, evaluate_single,
+    // Session-based evaluation (full API)
+    CodecResult, CorpusReport, EvalConfig, EvalSession, ImageReport, ImageData,
 };
-pub use import::{CsvImporter, CsvSchema, ExternalResult};
+pub use import::{CsvImporter, ExternalResult};
+pub use metrics::{MetricConfig, MetricResult, PerceptionLevel};
+pub use stats::{ParetoFront, RDPoint, Summary};
+pub use viewing::{ViewingCondition, REFERENCE_PPD};
+
+// Advanced/specialized re-exports (less commonly used)
+
+/// Sparse corpus checkout types (for large test corpora).
+#[cfg(feature = "default")]
+pub use corpus::{SparseCheckout, SparseFilter, SparseStatus};
+
+/// CSV schema for importing external results.
+#[cfg(feature = "default")]
+pub use import::CsvSchema;
+
+/// ICC color profile support (requires `icc` feature).
+#[cfg(feature = "icc")]
+pub use metrics::ColorProfile;
+
+/// XYB color space roundtrip (for testing XYB-based codecs).
+pub use metrics::xyb_roundtrip;
+
+/// Statistical functions (mean, median, percentile, etc.).
+pub use stats::{iqr, mean, median, percentile, percentile_u32, std_dev, trimmed_mean};
+
+/// Viewing condition simulation parameters.
+pub use viewing::{SimulationMode, SimulationParams};
+
+// Feature-gated re-exports
+
+/// Chart generation types (requires `chart` feature).
+#[cfg(feature = "chart")]
+pub use stats::{generate_svg, ChartConfig, ChartPoint, ChartSeries};
+
+/// Polynomial interpolation for quality curves (requires `interpolation` feature).
+#[cfg(feature = "interpolation")]
 pub use interpolation::{
-    GapPolynomial, InterpolationConfig, InterpolationTable, compute_gap_polynomials,
-    fit_gap_polynomial, fit_power_law, linear_interpolate,
+    compute_gap_polynomials, fit_gap_polynomial, fit_power_law, linear_interpolate,
+    GapPolynomial, InterpolationConfig, InterpolationTable,
 };
-pub use metrics::{ColorProfile, MetricConfig, MetricResult, PerceptionLevel, xyb_roundtrip};
-pub use stats::{
-    ChartConfig, ChartPoint, ChartSeries, ParetoFront, RDPoint, Summary, generate_svg, iqr, mean,
-    median, percentile, percentile_u32, std_dev, trimmed_mean,
-};
-pub use viewing::{REFERENCE_PPD, SimulationMode, SimulationParams, ViewingCondition};

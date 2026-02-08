@@ -45,6 +45,10 @@ default = ["icc", "jpeg-decode"]
 icc = ["moxcms"]
 # Enable JPEG decoding with ICC profile extraction
 jpeg-decode = ["jpeg-decoder"]
+# Enable SVG chart generation (used by codec-compare)
+chart = []
+# Enable polynomial interpolation for quality curves (advanced use)
+interpolation = []
 
 [dependencies]
 thiserror.workspace = true
