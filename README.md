@@ -48,7 +48,7 @@ let report = session.evaluate_corpus("./test_images")?;
 **Features:**
 - DSSIM, Butteraugli, and SSIMULACRA2 metrics (PSNR for legacy comparisons)
 - Viewing condition modeling (desktop, mobile, retina)
-- Corpus management with sparse checkout for large repos
+- Automatic corpus download and caching via [codec-corpus](https://crates.io/crates/codec-corpus)
 - CSV import for third-party benchmark results
 - Pareto front analysis and BD-Rate calculation
 - JSON/CSV report generation
@@ -128,6 +128,14 @@ A single test image can favor certain codecs. Use diverse datasets:
 - [Kodak](https://github.com/imazen/codec-corpus) — 24 classic benchmark images
 - [CLIC 2025](https://github.com/imazen/codec-corpus) — 62 high-resolution images
 - [CID22](https://github.com/imazen/codec-corpus) — 250 perceptual quality research images
+
+These datasets are automatically downloaded and cached via the `codec-corpus` crate:
+```rust
+use codec_eval::corpus::Corpus;
+
+let kodak = Corpus::get_dataset("kodak")?;
+let clic = Corpus::get_dataset("clic2025/training")?;
+```
 
 ### 4. Test at Multiple Quality Levels
 

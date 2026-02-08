@@ -133,29 +133,73 @@ impl Corpus {
         discovery::discover_corpus(path.as_ref())
     }
 
-    /// Default corpus repository URL.
+    /// Default corpus repository URL (used when corpus feature is disabled).
+    #[cfg(not(feature = "corpus"))]
     pub const DEFAULT_CORPUS_URL: &'static str =
-        "https://github.com/AcrossTheCloud/codec-corpus.git";
+        "https://github.com/imazen/codec-corpus.git";
 
-    /// Discover or download a corpus on demand.
+    /// Get corpus dataset, downloading if necessary.
     ///
-    /// If the path exists, discovers images. If not, clones from the given URL
-    /// (or the default codec-corpus repository) and then discovers.
+    /// When the `corpus` feature is enabled (default), uses the codec-corpus crate
+    /// for automatic download and caching. Otherwise, checks if the path exists locally.
     ///
     /// # Arguments
-    /// * `path` - Local path for the corpus
-    /// * `url` - Optional remote URL (defaults to codec-corpus)
-    /// * `subsets` - Optional list of subsets to download (e.g., `["kodak", "clic2025"]`)
+    /// * `path` - Dataset path (e.g., "kodak", "clic2025/training")
     ///
     /// # Example
     /// ```rust,ignore
-    /// // Download just the kodak test set
-    /// let corpus = Corpus::discover_or_download(
-    ///     "./corpus",
-    ///     None,
-    ///     Some(&["kodak"]),
-    /// )?;
+    /// // With corpus feature (default): downloads and caches automatically
+    /// let corpus = Corpus::get_dataset("kodak")?;
+    ///
+    /// // Discovers images in the cached directory
+    /// println!("Found {} images", corpus.len());
     /// ```
+    #[cfg(feature = "corpus")]
+    pub fn get_dataset(dataset: &str) -> Result<Self> {
+        let corpus_api = codec_corpus::Corpus::new()
+            .map_err(|e| crate::Error::Corpus(format!("Failed to initialize corpus: {e}")))?;
+
+        let path = corpus_api
+            .get(dataset)
+            .map_err(|e| crate::Error::Corpus(format!("Failed to get dataset '{dataset}': {e}")))?;
+
+        eprintln!("Using corpus dataset '{}' at {}", dataset, path.display());
+        Self::discover(&path)
+    }
+
+    /// Discover or download a corpus on demand (legacy, requires local path).
+    ///
+    /// If the path exists, discovers images. Otherwise returns an error.
+    /// Use `get_dataset()` when the `corpus` feature is enabled for automatic downloads.
+    ///
+    /// # Arguments
+    /// * `path` - Local path for the corpus
+    /// * `_url` - Ignored (for backward compatibility)
+    /// * `_subsets` - Ignored (for backward compatibility)
+    #[cfg(feature = "corpus")]
+    pub fn discover_or_download(
+        path: impl AsRef<Path>,
+        _url: Option<&str>,
+        _subsets: Option<&[&str]>,
+    ) -> Result<Self> {
+        let path = path.as_ref();
+
+        // If path exists and has images, discover
+        if path.exists() && path.is_dir() && has_image_files(path) {
+            return Self::discover(path);
+        }
+
+        Err(crate::Error::Corpus(format!(
+            "Path {} not found. Use Corpus::get_dataset() to download datasets automatically.",
+            path.display()
+        )))
+    }
+
+    /// Discover or download a corpus on demand (sparse checkout fallback).
+    ///
+    /// This version uses git sparse checkout when the `corpus` feature is disabled.
+    /// For most users, the `corpus` feature (enabled by default) is recommended.
+    #[cfg(not(feature = "corpus"))]
     pub fn discover_or_download(
         path: impl AsRef<Path>,
         url: Option<&str>,
@@ -165,11 +209,8 @@ impl Corpus {
         let url = url.unwrap_or(Self::DEFAULT_CORPUS_URL);
 
         // If path exists and has images, just discover
-        if path.exists() && path.is_dir() {
-            // Check if it has any image files
-            if has_image_files(path) {
-                return Self::discover(path);
-            }
+        if path.exists() && path.is_dir() && has_image_files(path) {
+            return Self::discover(path);
         }
 
         // Need to download
@@ -182,13 +223,11 @@ impl Corpus {
         // Use sparse checkout for efficiency
         let sparse = if let Some(subsets) = subsets {
             let checkout = SparseCheckout::clone_shallow(url, path, 1)?;
-            // Add subset directories
             let paths: Vec<&str> = subsets.to_vec();
             checkout.add_paths(&paths)?;
             checkout.checkout()?;
             checkout
         } else {
-            // Clone everything (but still use sparse for efficiency)
             let checkout = SparseCheckout::clone_shallow(url, path, 1)?;
             checkout.set_paths(&["*"])?;
             checkout.checkout()?;
@@ -196,28 +235,43 @@ impl Corpus {
         };
 
         eprintln!("Downloaded corpus to {}", sparse.path().display());
-
-        // Now discover
         Self::discover(path)
     }
 
-    /// Download a specific subset of the corpus.
+    /// Download a specific dataset (replaces download_subset).
+    ///
+    /// With the `corpus` feature enabled, this uses codec-corpus for caching.
+    ///
+    /// # Example
+    /// ```rust,ignore
+    /// let corpus = Corpus::download_dataset("kodak")?;
+    /// ```
+    #[cfg(feature = "corpus")]
+    pub fn download_dataset(dataset: &str) -> Result<Self> {
+        Self::get_dataset(dataset)
+    }
+
+    /// Download a specific subset of the corpus (sparse checkout fallback).
     ///
     /// # Example
     /// ```rust,ignore
     /// let corpus = Corpus::download_subset("./corpus", "kodak")?;
     /// ```
+    #[cfg(not(feature = "corpus"))]
     pub fn download_subset(path: impl AsRef<Path>, subset: &str) -> Result<Self> {
         Self::discover_or_download(path, None, Some(&[subset]))
     }
 
-    /// Get corpus, downloading if necessary. Returns cached corpus if available.
+    /// Get corpus from local paths (legacy method).
     ///
-    /// Checks common locations for existing corpus before downloading:
+    /// Checks common locations for existing corpus:
     /// 1. The specified path
     /// 2. ./codec-corpus
     /// 3. ../codec-corpus
     /// 4. ../codec-comparison/codec-corpus
+    ///
+    /// When the `corpus` feature is enabled, use `get_dataset()` instead
+    /// for automatic download and caching.
     pub fn get_or_download(preferred_path: impl AsRef<Path>) -> Result<Self> {
         let preferred = preferred_path.as_ref();
 
@@ -236,8 +290,19 @@ impl Corpus {
             }
         }
 
-        // Not found, download to preferred path
-        Self::discover_or_download(preferred, None, None)
+        // Not found
+        #[cfg(feature = "corpus")]
+        {
+            Err(crate::Error::Corpus(format!(
+                "Corpus not found at any common location. Use Corpus::get_dataset(\"kodak\") to download automatically."
+            )))
+        }
+
+        #[cfg(not(feature = "corpus"))]
+        {
+            // Fallback to sparse checkout
+            Self::discover_or_download(preferred, None, None)
+        }
     }
 
     /// Load a corpus from a JSON manifest file.

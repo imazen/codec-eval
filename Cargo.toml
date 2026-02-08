@@ -28,6 +28,8 @@ tempfile = "3"
 moxcms = { version = "0.7", features = ["options"] }
 # JPEG decoding with ICC profile extraction
 jpeg-decoder = "0.3"
+# Test image corpus download and caching
+codec-corpus = "1.0"
 
 [package]
 name = "codec-eval"
@@ -39,11 +41,13 @@ rust-version.workspace = true
 description = "Image codec comparison and evaluation library"
 
 [features]
-default = ["icc", "jpeg-decode"]
+default = ["icc", "jpeg-decode", "corpus"]
 # Enable ICC color profile support using moxcms (pure Rust, closest to libjxl's skcms)
 icc = ["moxcms"]
 # Enable JPEG decoding with ICC profile extraction
 jpeg-decode = ["jpeg-decoder"]
+# Enable corpus download/caching via codec-corpus crate
+corpus = ["dep:codec-corpus"]
 # Enable SVG chart generation (used by codec-compare)
 chart = []
 # Enable polynomial interpolation for quality curves (advanced use)
@@ -65,6 +69,8 @@ chrono.workspace = true
 moxcms = { workspace = true, optional = true }
 # Optional JPEG decoding with ICC profile extraction
 jpeg-decoder = { workspace = true, optional = true }
+# Optional corpus download/caching
+codec-corpus = { workspace = true, optional = true }
 
 [dev-dependencies]
 tempfile.workspace = true

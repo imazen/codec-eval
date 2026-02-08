@@ -25,7 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - dssim-core: 3.2 → 3.4
   - butteraugli: 0.3 → 0.4
   - fast-ssim2: 0.6 → 0.6.5
+  - codec-corpus: Now uses published crate (1.0) instead of git submodule
 - **Consolidated on fast-ssim2** - Removed ssimulacra2 dependency, rewrote `metrics::ssimulacra2` module to use fast-ssim2 (SIMD-accelerated, identical results)
+- **Corpus management simplified** - Now uses codec-corpus crate for automatic download and caching. Old sparse checkout methods remain for backward compatibility when feature is disabled.
+  - New `Corpus::get_dataset("kodak")` - Simple API for downloading datasets
+  - `discover_or_download()` still works but recommends new API
 - `DimensionMismatch` error now uses `(usize, usize)` instead of `(u32, u32)` for consistency with imgref
 - Made `interpolation` module and `stats::chart` feature-gated to reduce default footprint
 
