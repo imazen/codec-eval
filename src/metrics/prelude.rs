@@ -68,27 +68,20 @@ pub use butteraugli::ButteraugliResult;
 // SSIMULACRA2 (Best Correlation with Human Perception)
 // ============================================================================
 
-/// Compute SSIMULACRA2 score for a single frame (from ssimulacra2).
+/// Compute SSIMULACRA2 score with SIMD acceleration (from fast-ssim2).
 ///
-/// This is the reference implementation. For faster computation with SIMD,
-/// use `compute_ssimulacra2` from fast-ssim2 instead.
-pub use ssimulacra2::compute_frame_ssimulacra2;
-
-/// XYB color space type (from ssimulacra2).
-///
-/// Used internally by SSIMULACRA2.
-#[doc(hidden)]
-pub use ssimulacra2::Xyb;
-
-/// Fast SSIMULACRA2 computation with SIMD (from fast-ssim2).
-///
-/// Recommended over `compute_frame_ssimulacra2` for better performance.
+/// This is the recommended SSIMULACRA2 implementation, providing significantly
+/// better performance than the reference implementation while producing
+/// identical results.
 pub use fast_ssim2::compute_ssimulacra2;
 
-/// Fast SSIMULACRA2 configuration (from fast-ssim2).
+/// SSIMULACRA2 configuration for customizing computation (from fast-ssim2).
 pub use fast_ssim2::Ssimulacra2Config;
 
-/// SSIMULACRA2 precomputed reference (from fast-ssim2).
+/// Precomputed reference for repeated comparisons (from fast-ssim2).
+///
+/// Use this when comparing multiple distorted images against the same reference
+/// to avoid recomputing the reference image's analysis.
 pub use fast_ssim2::Ssimulacra2Reference;
 
 // ============================================================================

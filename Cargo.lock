@@ -385,7 +385,6 @@ dependencies = [
  "rgb",
  "serde",
  "serde_json",
- "ssimulacra2",
  "tempfile",
  "thiserror 2.0.18",
  "webp",
@@ -409,7 +408,6 @@ dependencies = [
  "rgb",
  "serde",
  "serde_json",
- "ssimulacra2",
  "tempfile",
  "thiserror 2.0.18",
 ]
@@ -1587,19 +1585,6 @@ name = "smallvec"
 version = "1.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03"
-
-[[package]]
-name = "ssimulacra2"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "700cb4e17f98c3f36756815b18dbec2b2e3c4f5028e9cdee3e23dd8c285e736c"
-dependencies = [
- "num-traits",
- "rayon",
- "thiserror 2.0.18",
- "yuvxyb",
- "yuvxyb-math",
-]
 
 [[package]]
 name = "strsim"

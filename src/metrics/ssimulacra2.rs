@@ -11,6 +11,12 @@
 //! - > 50: Noticeable difference
 //! - <= 50: Degraded
 //!
+//! # Implementation
+//!
+//! This module uses `fast-ssim2` for SIMD-accelerated SSIMULACRA2 calculation.
+//! It provides significantly better performance than the reference `ssimulacra2`
+//! implementation while producing identical results.
+//!
 //! # ICC Profile Support
 //!
 //! When comparing images with embedded ICC profiles, use [`calculate_ssimulacra2_icc`]
@@ -22,9 +28,8 @@
 //!
 //! Without proper ICC handling, scores can be off by 1-2 points at high quality levels.
 
-use ssimulacra2::{
-    ColorPrimaries, Rgb as Ssim2Rgb, TransferCharacteristic, compute_frame_ssimulacra2,
-};
+use fast_ssim2::compute_ssimulacra2;
+use imgref::ImgVec;
 
 use super::icc::ColorProfile;
 use crate::error::{Error, Result};
@@ -33,8 +38,8 @@ use crate::error::{Error, Result};
 ///
 /// # Arguments
 ///
-/// * `reference` - Reference image as RGB8 pixel data.
-/// * `test` - Test image as RGB8 pixel data.
+/// * `reference` - Reference image as RGB8 pixel data (row-major, 3 bytes per pixel).
+/// * `test` - Test image as RGB8 pixel data (row-major, 3 bytes per pixel).
 /// * `width` - Image width in pixels.
 /// * `height` - Image height in pixels.
 ///
@@ -45,6 +50,12 @@ use crate::error::{Error, Result};
 /// # Errors
 ///
 /// Returns an error if the images have different sizes or if calculation fails.
+///
+/// # Performance
+///
+/// This function uses `fast-ssim2` with SIMD acceleration. For the fastest
+/// performance, enable the `unsafe-simd` feature on fast-ssim2 (requires
+/// unsafe code, but significantly faster on modern CPUs).
 pub fn calculate_ssimulacra2(
     reference: &[u8],
     test: &[u8],
@@ -70,56 +81,26 @@ pub fn calculate_ssimulacra2(
         });
     }
 
-    // Convert RGB8 to f32 RGB (0.0-1.0 range)
-    let ref_f32: Vec<[f32; 3]> = reference
+    // Convert flat RGB8 buffer to [u8; 3] array for fast-ssim2
+    let ref_pixels: Vec<[u8; 3]> = reference
         .chunks_exact(3)
-        .map(|c| {
-            [
-                c[0] as f32 / 255.0,
-                c[1] as f32 / 255.0,
-                c[2] as f32 / 255.0,
-            ]
-        })
+        .map(|c| [c[0], c[1], c[2]])
         .collect();
 
-    let test_f32: Vec<[f32; 3]> = test
+    let test_pixels: Vec<[u8; 3]> = test
         .chunks_exact(3)
-        .map(|c| {
-            [
-                c[0] as f32 / 255.0,
-                c[1] as f32 / 255.0,
-                c[2] as f32 / 255.0,
-            ]
-        })
+        .map(|c| [c[0], c[1], c[2]])
         .collect();
 
-    let ref_img = Ssim2Rgb::new(
-        ref_f32,
-        width,
-        height,
-        TransferCharacteristic::SRGB,
-        ColorPrimaries::BT709,
-    )
-    .map_err(|e| Error::MetricCalculation {
-        metric: "SSIMULACRA2".to_string(),
-        reason: format!("Failed to create reference image: {e}"),
-    })?;
+    let ref_img = ImgVec::new(ref_pixels, width, height);
+    let test_img = ImgVec::new(test_pixels, width, height);
 
-    let test_img = Ssim2Rgb::new(
-        test_f32,
-        width,
-        height,
-        TransferCharacteristic::SRGB,
-        ColorPrimaries::BT709,
-    )
-    .map_err(|e| Error::MetricCalculation {
-        metric: "SSIMULACRA2".to_string(),
-        reason: format!("Failed to create test image: {e}"),
-    })?;
-
-    compute_frame_ssimulacra2(ref_img, test_img).map_err(|e| Error::MetricCalculation {
-        metric: "SSIMULACRA2".to_string(),
-        reason: format!("Failed to compute SSIMULACRA2: {e}"),
+    // fast-ssim2 uses ImgRef, so convert ImgVec to ImgRef
+    compute_ssimulacra2(ref_img.as_ref(), test_img.as_ref()).map_err(|e| {
+        Error::MetricCalculation {
+            metric: "SSIMULACRA2".to_string(),
+            reason: format!("Failed to compute SSIMULACRA2: {e:?}"),
+        }
     })
 }
 
