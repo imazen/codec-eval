@@ -469,7 +469,7 @@ mod tests {
         let fit = fit_power_law(&points, &config);
         assert!(fit.is_some());
 
-        let (a, b, c, r_squared) = fit.unwrap();
+        let (_a, b, _c, r_squared) = fit.unwrap();
         assert!(r_squared > 0.99);
         // Should find b ≈ 1.0 for linear
         assert!((b - 1.0).abs() < 0.2);
