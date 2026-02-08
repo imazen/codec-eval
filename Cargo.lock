@@ -405,7 +405,7 @@ dependencies = [
 
 [[package]]
 name = "codec-eval"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "butteraugli",
  "chrono",
@@ -426,7 +426,7 @@ dependencies = [
 
 [[package]]
 name = "codec-eval-cli"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "clap",
