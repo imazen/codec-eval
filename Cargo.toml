@@ -55,6 +55,7 @@ imgref.workspace = true
 rgb.workspace = true
 dssim-core.workspace = true
 ssimulacra2.workspace = true
+fast-ssim2.workspace = true
 butteraugli.workspace = true
 rayon.workspace = true
 chrono.workspace = true

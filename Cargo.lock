@@ -401,6 +401,7 @@ dependencies = [
  "chrono",
  "csv",
  "dssim-core",
+ "fast-ssim2",
  "imgref",
  "jpeg-decoder",
  "moxcms",

@@ -29,6 +29,7 @@
 pub mod butteraugli;
 pub mod dssim;
 pub mod icc;
+pub mod prelude;
 pub mod ssimulacra2;
 pub mod xyb;
 
