@@ -44,8 +44,8 @@ pub fn calculate_dssim(
 ) -> Result<f64> {
     if reference.width() != test.width() || reference.height() != test.height() {
         return Err(Error::DimensionMismatch {
-            expected: (reference.width() as u32, reference.height() as u32),
-            actual: (test.width() as u32, test.height() as u32),
+            expected: (reference.width(), reference.height()),
+            actual: (test.width(), test.height()),
         });
     }
 

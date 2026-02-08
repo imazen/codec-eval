@@ -53,8 +53,8 @@ pub fn calculate_ssimulacra2(
 ) -> Result<f64> {
     if reference.len() != test.len() {
         return Err(Error::DimensionMismatch {
-            expected: (width as u32, height as u32),
-            actual: ((test.len() / 3 / height) as u32, height as u32),
+            expected: (width, height),
+            actual: (test.len() / 3 / height, height),
         });
     }
 

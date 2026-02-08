@@ -32,9 +32,9 @@ pub enum Error {
     #[error("Dimension mismatch: expected {expected:?}, got {actual:?}")]
     DimensionMismatch {
         /// Expected dimensions (width, height).
-        expected: (u32, u32),
+        expected: (usize, usize),
         /// Actual dimensions (width, height).
-        actual: (u32, u32),
+        actual: (usize, usize),
     },
 
     /// Failed to calculate a quality metric.
@@ -62,6 +62,17 @@ pub enum Error {
     /// Invalid quality value provided.
     #[error("Invalid quality value: {0} (expected 0.0-100.0 or codec-specific range)")]
     InvalidQuality(f64),
+
+    /// Quality metric is below the specified threshold.
+    #[error("{metric} quality below threshold: {value} (threshold: {threshold})")]
+    QualityBelowThreshold {
+        /// Name of the quality metric.
+        metric: String,
+        /// Actual value.
+        value: f64,
+        /// Threshold that was not met.
+        threshold: f64,
+    },
 
     /// Unsupported image or codec format.
     #[error("Unsupported format: {0}")]

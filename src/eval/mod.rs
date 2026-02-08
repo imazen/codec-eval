@@ -6,9 +6,12 @@
 //! - [`session::EvalConfig`]: Configuration for evaluation
 //! - [`session::ImageData`]: Image data types accepted by the session
 //! - [`report`]: Report types for evaluation results
+//! - [`helpers`]: Lightweight helpers for simple quality evaluation
 
+pub mod helpers;
 pub mod report;
 pub mod session;
 
+pub use helpers::{assert_perception_level, assert_quality, evaluate_single};
 pub use report::{CodecResult, CorpusReport, ImageReport};
 pub use session::{EvalConfig, EvalSession, ImageData};

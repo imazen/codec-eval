@@ -43,8 +43,8 @@ pub fn calculate_butteraugli(
 ) -> Result<f64> {
     if reference.len() != test.len() {
         return Err(Error::DimensionMismatch {
-            expected: (width as u32, height as u32),
-            actual: ((test.len() / 3 / height) as u32, height as u32),
+            expected: (width, height),
+            actual: (test.len() / 3 / height, height),
         });
     }
 
@@ -96,8 +96,8 @@ pub fn calculate_butteraugli_with_intensity(
 ) -> Result<f64> {
     if reference.len() != test.len() {
         return Err(Error::DimensionMismatch {
-            expected: (width as u32, height as u32),
-            actual: ((test.len() / 3 / height) as u32, height as u32),
+            expected: (width, height),
+            actual: (test.len() / 3 / height, height),
         });
     }
 
