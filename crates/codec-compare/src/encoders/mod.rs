@@ -55,14 +55,18 @@ pub fn codec_color(id: &str) -> &'static str {
         "webp" => "#27ae60", // green
 
         // AVIF variants
-        "avif-aom" => "#9b59b6",   // purple
-        "avif-rav1e" => "#e67e22",         // orange
-        "avif-rav1e-imazen" => "#d35400",  // dark orange
-        "avif-rav1e-qm" => "#c0392b",     // dark red
-        "avif-rav1e-vaq" => "#8e44ad",     // purple
-        "avif-rav1e-qm-vb" => "#16a085",  // green-teal
-        "avif-rav1e-still" => "#2980b9",   // blue
-        "avif-svt" => "#1abc9c",          // teal
+        "avif-aom" => "#9b59b6",              // purple
+        "avif-rav1e" => "#e67e22",            // orange
+        "avif-rav1e-qm" => "#d35400",        // dark orange
+        "avif-rav1e-qm-cdef" => "#c0392b",   // dark red
+        "avif-rav1e-qm-rdotx" => "#8e44ad",  // purple
+        "avif-rav1e-qm-vaq15" => "#16a085",  // green-teal
+        "avif-rav1e-qm-cdef-rdotx" => "#2980b9", // blue
+        "avif-rav1e-qm-seg125" => "#27ae60",  // green
+        "avif-rav1e-qm-seg150" => "#1abc9c",  // teal
+        "avif-rav1e-qm-seg2" => "#f1c40f",    // yellow
+        "avif-rav1e-qm-rdotx-seg2" => "#e91e63", // pink
+        "avif-svt" => "#1abc9c",              // teal
 
         // JPEG XL
         "jpegxl" => "#f39c12", // golden yellow

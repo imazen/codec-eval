@@ -16,18 +16,33 @@ use codec_eval::eval::session::EncodeRequest;
 pub enum AvifEncoder {
     /// rav1e - Pure Rust AV1 encoder (default for native builds)
     Rav1e,
-    /// rav1e with all imazen features (QM + VAQ + StillImage)
+    /// rav1e with QM only (best single feature: -10% BD-Rate)
     #[cfg(feature = "avif-imazen")]
     Rav1eImazen,
-    /// rav1e with QM only
+    /// QM + CDEF forced on at all quality levels
     #[cfg(feature = "avif-imazen")]
-    Rav1eQmOnly,
-    /// rav1e with VAQ only
+    Rav1eQmCdef,
+    /// QM + rdo_tx_decision forced on
     #[cfg(feature = "avif-imazen")]
-    Rav1eVaqOnly,
-    /// rav1e with StillImage tuning only
+    Rav1eQmRdoTx,
+    /// QM + VAQ strength 1.5 (expanded SSIM boost range)
     #[cfg(feature = "avif-imazen")]
-    Rav1eStillOnly,
+    Rav1eQmVaq15,
+    /// QM + CDEF + rdo_tx_decision (both forced on)
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmCdefRdoTx,
+    /// QM + separated segmentation boost 1.25
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmSeg125,
+    /// QM + separated segmentation boost 1.5
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmSeg150,
+    /// QM + separated segmentation boost 2.0
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmSegBoost,
+    /// QM + RdoTx + SegBoost 2.0
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmRdoTxSegBoost,
 }
 
 impl AvifEncoder {
@@ -37,7 +52,11 @@ impl AvifEncoder {
         #[cfg(feature = "avif-imazen")]
         {
             v.push(Self::Rav1eImazen);
-            v.push(Self::Rav1eVaqOnly);
+            v.push(Self::Rav1eQmRdoTx);
+            v.push(Self::Rav1eQmSeg125);
+            v.push(Self::Rav1eQmSeg150);
+            v.push(Self::Rav1eQmSegBoost);
+            v.push(Self::Rav1eQmRdoTxSegBoost);
         }
         v
     }
@@ -47,13 +66,23 @@ impl AvifEncoder {
         match self {
             Self::Rav1e => "avif-rav1e",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eImazen => "avif-rav1e-imazen",
+            Self::Rav1eImazen => "avif-rav1e-qm",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eQmOnly => "avif-rav1e-qm",
+            Self::Rav1eQmCdef => "avif-rav1e-qm-cdef",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eVaqOnly => "avif-rav1e-qm-vb",
+            Self::Rav1eQmRdoTx => "avif-rav1e-qm-rdotx",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eStillOnly => "avif-rav1e-still",
+            Self::Rav1eQmVaq15 => "avif-rav1e-qm-vaq15",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmCdefRdoTx => "avif-rav1e-qm-cdef-rdotx",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSeg125 => "avif-rav1e-qm-seg125",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSeg150 => "avif-rav1e-qm-seg150",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSegBoost => "avif-rav1e-qm-seg2",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmRdoTxSegBoost => "avif-rav1e-qm-rdotx-seg2",
         }
     }
 
@@ -62,13 +91,23 @@ impl AvifEncoder {
         match self {
             Self::Rav1e => "AVIF (rav1e)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eImazen => "AVIF (rav1e-imazen all)",
+            Self::Rav1eImazen => "AVIF (rav1e QM)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eQmOnly => "AVIF (rav1e QM only)",
+            Self::Rav1eQmCdef => "AVIF (QM+CDEF)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eVaqOnly => "AVIF (rav1e QM+VarBoost)",
+            Self::Rav1eQmRdoTx => "AVIF (QM+RdoTx)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eStillOnly => "AVIF (rav1e StillImage only)",
+            Self::Rav1eQmVaq15 => "AVIF (QM+VAQ1.5)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmCdefRdoTx => "AVIF (QM+CDEF+RdoTx)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSeg125 => "AVIF (QM+Seg1.25)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSeg150 => "AVIF (QM+Seg1.5)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmSegBoost => "AVIF (QM+Seg2.0)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmRdoTxSegBoost => "AVIF (QM+RdoTx+Seg2.0)",
         }
     }
 }
@@ -162,21 +201,30 @@ fn encode_avif_ravif(
         .with_quality(quality as f32)
         .with_speed(speed);
 
-    // When the imazen feature is compiled in, explicitly set each feature
-    // per variant. Baseline rav1e disables everything to match upstream.
+    // When the imazen feature is compiled in, configure each variant.
+    // Baseline rav1e disables everything to match upstream.
     #[cfg(feature = "avif-imazen")]
     {
-        let (qm, vaq, vaq_str, still) = match variant {
-            AvifEncoder::Rav1e => (false, false, 1.0, false),
-            AvifEncoder::Rav1eImazen => (true, false, 1.0, false),
-            AvifEncoder::Rav1eQmOnly => (true, false, 1.0, false),
-            AvifEncoder::Rav1eVaqOnly => (true, true, 0.3, false),
-            AvifEncoder::Rav1eStillOnly => (false, false, 1.0, true),
+        // (qm, vaq, vaq_str, cdef_override, rdo_tx_override, seg_boost)
+        let (qm, vaq, vaq_str, cdef, rdo_tx, seg_boost) = match variant {
+            AvifEncoder::Rav1e => (false, false, 1.0, None, None, 1.0),
+            AvifEncoder::Rav1eImazen => (true, false, 1.0, None, None, 1.0),
+            AvifEncoder::Rav1eQmCdef => (true, false, 1.0, Some(true), None, 1.0),
+            AvifEncoder::Rav1eQmRdoTx => (true, false, 1.0, None, Some(true), 1.0),
+            AvifEncoder::Rav1eQmVaq15 => (true, true, 1.5, None, None, 1.0),
+            AvifEncoder::Rav1eQmCdefRdoTx => (true, false, 1.0, Some(true), Some(true), 1.0),
+            AvifEncoder::Rav1eQmSeg125 => (true, false, 1.0, None, None, 1.25),
+            AvifEncoder::Rav1eQmSeg150 => (true, false, 1.0, None, None, 1.5),
+            AvifEncoder::Rav1eQmSegBoost => (true, false, 1.0, None, None, 2.0),
+            AvifEncoder::Rav1eQmRdoTxSegBoost => (true, false, 1.0, None, Some(true), 2.0),
         };
         encoder = encoder
             .with_qm(qm)
             .with_vaq(vaq, vaq_str)
-            .with_still_image_tuning(still);
+            .with_still_image_tuning(false)
+            .with_cdef(cdef)
+            .with_rdo_tx_decision(rdo_tx)
+            .with_seg_boost(seg_boost);
     }
     let _ = variant;
 

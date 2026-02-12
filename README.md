@@ -54,6 +54,38 @@ let report = session.evaluate_corpus("./test_images")?;
 - JSON/CSV report generation
 - Optional: SVG charts, polynomial interpolation
 
+### codec-iter: Fast Encoder Iteration
+
+A CLI tool for rapid encoder development feedback. Change code, run eval, see if things got better — in under a second for small image sets.
+
+```bash
+# Quick eval: 3 representative images, 3 quality levels, ~360ms
+just eval
+
+# Compare subsampling modes
+just eval-sweep
+
+# Full sweep: subsampling × XYB, side-by-side
+just eval-sweep-full
+
+# Save a baseline, then iterate against it
+just eval-baseline
+# ... make encoder changes ...
+just eval
+```
+
+`codec-iter` uses [zencodecs](https://github.com/imazen/zencodecs) for encode/decode and [fast-ssim2](https://github.com/imazen/fast-ssim2) for SSIMULACRA2 scoring. Source images are loaded from PNG (cached as PPM for faster reloads via [zenpnm](https://github.com/imazen/zenpnm)). Image tiers are pre-selected from CID22 via [glassa](https://github.com/imazen/glassa) clustering — 3/5/15 representative images depending on `--limit`.
+
+**Subcommands:**
+
+- `eval` — Encode, decode, compute SSIM2. Compares against stored baseline if one exists; auto-saves on first run.
+- `sweep` — Cartesian product of config options (subsampling, XYB). Shows ranked comparison table.
+- `baseline save` / `baseline show` — Manage stored baselines (JSON in `./baselines/`).
+
+**Quality presets:** `quick` (3 points: 75/85/95), `standard` (8 points: 50–95), `dense` (25 points: 50–98, step 2).
+
+See `just --list` for all recipes, or `cargo run -p codec-iter -- --help` for full CLI options.
+
 ### Quick Quality Checks (New in 0.3)
 
 For simple tests without full corpus evaluation:
