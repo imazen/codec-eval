@@ -239,6 +239,7 @@ fn parse_formats(s: &str) -> anyhow::Result<FormatSelection> {
 
     let mut selection = FormatSelection {
         jpeg: false,
+        zenjpeg: false,
         webp: false,
         avif: false,
         jpegxl: false,
@@ -247,10 +248,11 @@ fn parse_formats(s: &str) -> anyhow::Result<FormatSelection> {
     for part in s.split(',') {
         match part.trim().to_lowercase().as_str() {
             "jpeg" | "jpg" => selection.jpeg = true,
+            "zenjpeg" => selection.zenjpeg = true,
             "webp" => selection.webp = true,
             "avif" => selection.avif = true,
             "jpegxl" | "jxl" => selection.jpegxl = true,
-            other => anyhow::bail!("Unknown format: {}. Use: jpeg, webp, avif, jpegxl", other),
+            other => anyhow::bail!("Unknown format: {}. Use: jpeg, zenjpeg, webp, avif, jpegxl", other),
         }
     }
 
@@ -498,6 +500,11 @@ fn list_codecs() {
     println!("  - jpegli: Google's perceptually-optimized JPEG encoder");
     #[cfg(not(feature = "jpegli"))]
     println!("  - jpegli: (not compiled - enable 'jpegli' feature)");
+
+    #[cfg(feature = "zenjpeg")]
+    println!("  - zenjpeg: Hybrid perceptual JPEG encoder (pure Rust)");
+    #[cfg(not(feature = "zenjpeg"))]
+    println!("  - zenjpeg: (not compiled - enable 'zenjpeg' feature)");
 
     println!("\nWebP:");
     #[cfg(feature = "webp")]

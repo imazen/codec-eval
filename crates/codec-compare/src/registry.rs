@@ -89,6 +89,8 @@ impl CompareConfig {
 pub struct FormatSelection {
     /// Include JPEG codecs (mozjpeg, jpegli).
     pub jpeg: bool,
+    /// Include zenjpeg codec.
+    pub zenjpeg: bool,
     /// Include WebP.
     pub webp: bool,
     /// Include AVIF (all encoders).
@@ -102,6 +104,7 @@ impl FormatSelection {
     pub fn all() -> Self {
         Self {
             jpeg: true,
+            zenjpeg: true,
             webp: true,
             avif: true,
             jpegxl: true,
@@ -112,6 +115,7 @@ impl FormatSelection {
     pub fn jpeg_only() -> Self {
         Self {
             jpeg: true,
+            zenjpeg: true,
             webp: false,
             avif: false,
             jpegxl: false,
@@ -122,6 +126,7 @@ impl FormatSelection {
     pub fn next_gen() -> Self {
         Self {
             jpeg: false,
+            zenjpeg: false,
             webp: true,
             avif: true,
             jpegxl: true,
@@ -158,6 +163,9 @@ impl CodecRegistry {
         if self.config.formats.jpeg {
             self.register_jpeg();
         }
+        if self.config.formats.zenjpeg {
+            self.register_zenjpeg();
+        }
         if self.config.formats.webp {
             self.register_webp();
         }
@@ -180,6 +188,15 @@ impl CodecRegistry {
 
         // Register all jpegli variants
         for codec in encoders::jpeg::JpegliCodec::all_variants() {
+            if codec.is_available() {
+                self.register_codec(Box::new(codec));
+            }
+        }
+    }
+
+    /// Register zenjpeg codec.
+    pub fn register_zenjpeg(&mut self) {
+        for codec in encoders::zenjpeg::ZenjpegCodec::all_variants() {
             if codec.is_available() {
                 self.register_codec(Box::new(codec));
             }
