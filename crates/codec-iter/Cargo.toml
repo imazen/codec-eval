@@ -10,9 +10,6 @@ name = "codec-iter"
 path = "src/main.rs"
 
 [dependencies]
-zencodecs = { path = "../../../zencodecs", features = ["jpeg"] }
-zenjpeg = { path = "../../../zenjpeg/zenjpeg" }
-zenpnm = { path = "../../../zenpnm", features = ["imgref"] }
 fast-ssim2 = { workspace = true }
 clap = { workspace = true }
 serde = { workspace = true }
@@ -22,6 +19,11 @@ imgref = { workspace = true }
 rgb = { workspace = true }
 anyhow = "1"
 png = "0.18"
+zenpnm = { path = "../../../zenpnm", features = ["imgref"] }
+
+# JPEG support (optional — depends on zencodecs which needs updated zencodec-types traits)
+zencodecs = { path = "../../../zencodecs", features = ["jpeg"], optional = true }
+zenjpeg = { path = "../../../zenjpeg/zenjpeg", optional = true }
 
 # AVIF support (optional)
 ravif = { path = "../../../ravif/ravif", default-features = false, features = ["threading"], optional = true }
@@ -33,7 +35,8 @@ cudarse-driver = { path = "../../../turbo-metrics/crates/cudarse/cudarse-driver"
 cudarse-npp = { path = "../../../turbo-metrics/crates/cudarse/cudarse-npp", features = ["isu"], optional = true }
 
 [features]
-default = []
+default = ["avif-imazen"]
+jpeg = ["dep:zencodecs", "dep:zenjpeg"]
 gpu = ["dep:ssimulacra2-cuda", "dep:cudarse-driver", "dep:cudarse-npp"]
 avif = ["dep:ravif", "dep:zenavif"]
 avif-imazen = ["avif", "ravif/imazen"]

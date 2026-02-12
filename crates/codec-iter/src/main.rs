@@ -5,11 +5,11 @@ use std::path::{Path, PathBuf};
 use anyhow::Result;
 use chrono::Utc;
 use clap::{Parser, Subcommand, ValueEnum};
-use zencodecs::config::jpeg::ChromaSubsampling;
 
 #[cfg(feature = "avif")]
 mod avif_config;
 mod baseline;
+#[cfg(feature = "jpeg")]
 mod config;
 mod eval;
 #[cfg(feature = "gpu")]
@@ -32,7 +32,7 @@ enum Commands {
     /// Evaluate a codec configuration against stored baseline
     Eval {
         /// Codec format: jpeg or avif
-        #[arg(long, default_value = "jpeg")]
+        #[arg(long, default_value = "avif")]
         format: String,
 
         /// Corpus directory containing source images
@@ -83,7 +83,7 @@ enum Commands {
     /// Sweep over configuration matrix
     Sweep {
         /// Codec format: jpeg or avif
-        #[arg(long, default_value = "jpeg")]
+        #[arg(long, default_value = "avif")]
         format: String,
 
         #[arg(long, default_value = "~/work/codec-corpus/CID22/CID22-512/training")]
@@ -131,7 +131,7 @@ enum Commands {
 enum BaselineAction {
     /// Save current results as baseline
     Save {
-        #[arg(long, default_value = "jpeg")]
+        #[arg(long, default_value = "avif")]
         format: String,
 
         #[arg(long, default_value = "~/work/codec-corpus/CID22/CID22-512/training")]
@@ -167,7 +167,7 @@ enum BaselineAction {
 
     /// Show stored baseline
     Show {
-        #[arg(long, default_value = "jpeg")]
+        #[arg(long, default_value = "avif")]
         format: String,
 
         #[arg(long, default_value = "./baselines")]
@@ -210,7 +210,10 @@ fn expand_tilde(path: &Path) -> PathBuf {
     path.to_path_buf()
 }
 
+#[cfg(feature = "jpeg")]
 fn build_jpeg_config(subsampling: Option<&str>, xyb: bool) -> config::JpegConfig {
+    use zencodecs::config::jpeg::ChromaSubsampling;
+
     let sub = subsampling
         .and_then(config::parse_subsampling)
         .unwrap_or(ChromaSubsampling::Quarter);
@@ -222,6 +225,7 @@ fn build_jpeg_config(subsampling: Option<&str>, xyb: bool) -> config::JpegConfig
     }
 }
 
+#[cfg(feature = "jpeg")]
 fn build_jpeg_codec(jpeg_config: config::JpegConfig) -> Codec {
     let summary = config::config_summary(&jpeg_config);
     Codec {
@@ -242,6 +246,51 @@ fn build_jpeg_codec(jpeg_config: config::JpegConfig) -> Codec {
             Ok(decoded.into_rgb8())
         }),
         summary,
+    }
+}
+
+/// Build a codec from format name and CLI args.
+fn build_codec(
+    format: &str,
+    #[cfg_attr(not(feature = "jpeg"), allow(unused))] subsampling: Option<&str>,
+    #[cfg_attr(not(feature = "jpeg"), allow(unused))] xyb: bool,
+    #[cfg_attr(not(feature = "avif"), allow(unused))] avif_preset: &str,
+    #[cfg_attr(not(feature = "avif"), allow(unused))] avif_speed: Option<u8>,
+    #[cfg_attr(not(feature = "avif"), allow(unused))] avif_8bit: bool,
+) -> Result<(Codec, String)> {
+    match format {
+        #[cfg(feature = "jpeg")]
+        "jpeg" => {
+            let jpeg_config = build_jpeg_config(subsampling, xyb);
+            let codec = build_jpeg_codec(jpeg_config);
+            Ok((codec, "jpeg".to_string()))
+        }
+        #[cfg(not(feature = "jpeg"))]
+        "jpeg" => {
+            anyhow::bail!(
+                "JPEG support requires the 'jpeg' feature. Build with: cargo build --features jpeg"
+            );
+        }
+        #[cfg(feature = "avif")]
+        "avif" => {
+            let mut cfg = avif_config::AvifConfig::from_preset(avif_preset)?;
+            if let Some(speed) = avif_speed {
+                cfg.speed = speed;
+            }
+            if avif_8bit {
+                cfg.bit_depth_8 = true;
+            }
+            let key = format!("avif-{avif_preset}");
+            let codec = avif_config::build_avif_codec(&cfg);
+            Ok((codec, key))
+        }
+        #[cfg(not(feature = "avif"))]
+        "avif" => {
+            anyhow::bail!(
+                "AVIF support requires the 'avif' feature. Build with: cargo build --features avif"
+            );
+        }
+        other => anyhow::bail!("Unknown format: {other}. Supported: jpeg, avif"),
     }
 }
 
@@ -330,7 +379,6 @@ fn print_eval_results(
     }
 }
 
-#[allow(unused_variables)] // AVIF args only used with avif feature
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
@@ -356,33 +404,14 @@ fn main() -> Result<()> {
             let images = source::load_sources(&corpus, limit)?;
             eprintln!("Loaded {} images", images.len());
 
-            let (codec, baseline_key) = match format.as_str() {
-                "jpeg" => {
-                    let jpeg_config = build_jpeg_config(subsampling.as_deref(), xyb);
-                    let codec = build_jpeg_codec(jpeg_config);
-                    (codec, "jpeg".to_string())
-                }
-                #[cfg(feature = "avif")]
-                "avif" => {
-                    let mut avif_cfg = avif_config::AvifConfig::from_preset(&avif_preset)?;
-                    if let Some(speed) = avif_speed {
-                        avif_cfg.speed = speed;
-                    }
-                    if avif_8bit {
-                        avif_cfg.bit_depth_8 = true;
-                    }
-                    let key = format!("avif-{avif_preset}");
-                    let codec = avif_config::build_avif_codec(&avif_cfg);
-                    (codec, key)
-                }
-                #[cfg(not(feature = "avif"))]
-                "avif" => {
-                    anyhow::bail!(
-                        "AVIF support requires the 'avif' feature. Build with: cargo build --features avif"
-                    );
-                }
-                other => anyhow::bail!("Unknown format: {other}. Supported: jpeg, avif"),
-            };
+            let (codec, baseline_key) = build_codec(
+                &format,
+                subsampling.as_deref(),
+                xyb,
+                &avif_preset,
+                avif_speed,
+                avif_8bit,
+            )?;
 
             eprintln!(
                 "Evaluating {} ({} quality levels)...",
@@ -439,7 +468,9 @@ fn main() -> Result<()> {
             eprintln!("Loaded {} images", images.len());
 
             let codecs: Vec<Codec> = match format.as_str() {
+                #[cfg(feature = "jpeg")]
                 "jpeg" => {
+                    use zencodecs::config::jpeg::ChromaSubsampling;
                     let subsamplings: Vec<ChromaSubsampling> = subsampling
                         .as_deref()
                         .unwrap_or("420,444")
@@ -467,6 +498,10 @@ fn main() -> Result<()> {
                     }
                     codecs
                 }
+                #[cfg(not(feature = "jpeg"))]
+                "jpeg" => {
+                    anyhow::bail!("JPEG support requires the 'jpeg' feature");
+                }
                 #[cfg(feature = "avif")]
                 "avif" => {
                     let preset_names: Vec<&str> = avif_presets
@@ -491,12 +526,16 @@ fn main() -> Result<()> {
                 }
                 #[cfg(not(feature = "avif"))]
                 "avif" => {
-                    anyhow::bail!(
-                        "AVIF support requires the 'avif' feature. Build with: cargo build --features avif"
-                    );
+                    anyhow::bail!("AVIF support requires the 'avif' feature");
                 }
                 other => anyhow::bail!("Unknown format: {other}. Supported: jpeg, avif"),
             };
+
+            // Suppress unused variable warnings when features are disabled
+            #[cfg(not(feature = "jpeg"))]
+            let _ = (&subsampling, &xyb);
+            #[cfg(not(feature = "avif"))]
+            let _ = (&avif_presets, &avif_speed, &avif_8bit);
 
             eprintln!("Sweeping {} configs...", codecs.len());
             let result = sweep::run_sweep(&images, &codecs, &quality_levels, gpu)?;
@@ -524,33 +563,14 @@ fn main() -> Result<()> {
                 eprintln!("Loading {limit} images from {}...", corpus.display());
                 let images = source::load_sources(&corpus, limit)?;
 
-                let (codec, baseline_key) = match format.as_str() {
-                    "jpeg" => {
-                        let jpeg_config = build_jpeg_config(subsampling.as_deref(), xyb);
-                        let codec = build_jpeg_codec(jpeg_config);
-                        (codec, "jpeg".to_string())
-                    }
-                    #[cfg(feature = "avif")]
-                    "avif" => {
-                        let mut avif_cfg = avif_config::AvifConfig::from_preset(&avif_preset)?;
-                        if let Some(speed) = avif_speed {
-                            avif_cfg.speed = speed;
-                        }
-                        if avif_8bit {
-                            avif_cfg.bit_depth_8 = true;
-                        }
-                        let key = format!("avif-{avif_preset}");
-                        let codec = avif_config::build_avif_codec(&avif_cfg);
-                        (codec, key)
-                    }
-                    #[cfg(not(feature = "avif"))]
-                    "avif" => {
-                        anyhow::bail!(
-                            "AVIF support requires the 'avif' feature. Build with: cargo build --features avif"
-                        );
-                    }
-                    other => anyhow::bail!("Unknown format: {other}. Supported: jpeg, avif"),
-                };
+                let (codec, baseline_key) = build_codec(
+                    &format,
+                    subsampling.as_deref(),
+                    xyb,
+                    &avif_preset,
+                    avif_speed,
+                    avif_8bit,
+                )?;
 
                 eprintln!("Evaluating for baseline...");
                 let result = eval::run_eval(&images, &codec, &quality_levels, false)?;

@@ -97,11 +97,16 @@ fn rgb8_to_rgba8(img: imgref::ImgRef<'_, Rgb8>) -> ImgVec<RGBA8> {
 }
 
 /// Convert decoded `PixelData` to `ImgVec<Rgb8>`, handling common variants.
+/// Convert 10-bit (0-1023) component to 8-bit (0-255).
+fn to_8bit(v: u16) -> u8 {
+    // Proper rounding: (v * 255 + 512) / 1023
+    ((u32::from(v) * 255 + 512) / 1023).min(255) as u8
+}
+
 fn pixel_data_to_rgb8(pd: zenavif::PixelData) -> Result<ImgVec<Rgb8>> {
     match pd {
         zenavif::PixelData::Rgb8(img) => Ok(img),
         zenavif::PixelData::Rgba8(img) => {
-            // Drop alpha channel
             let pixels: Vec<Rgb8> = img
                 .pixels()
                 .map(|p| RGB {
@@ -112,8 +117,30 @@ fn pixel_data_to_rgb8(pd: zenavif::PixelData) -> Result<ImgVec<Rgb8>> {
                 .collect();
             Ok(ImgVec::new(pixels, img.width(), img.height()))
         }
+        zenavif::PixelData::Rgb16(img) => {
+            let pixels: Vec<Rgb8> = img
+                .pixels()
+                .map(|p| RGB {
+                    r: to_8bit(p.r),
+                    g: to_8bit(p.g),
+                    b: to_8bit(p.b),
+                })
+                .collect();
+            Ok(ImgVec::new(pixels, img.width(), img.height()))
+        }
+        zenavif::PixelData::Rgba16(img) => {
+            let pixels: Vec<Rgb8> = img
+                .pixels()
+                .map(|p| RGB {
+                    r: to_8bit(p.r),
+                    g: to_8bit(p.g),
+                    b: to_8bit(p.b),
+                })
+                .collect();
+            Ok(ImgVec::new(pixels, img.width(), img.height()))
+        }
         other => anyhow::bail!(
-            "Unexpected AVIF decode output: expected Rgb8 or Rgba8, got {}x{} {:?}",
+            "Unexpected AVIF decode output: expected RGB/RGBA 8/16-bit, got {}x{} {:?}",
             other.width(),
             other.height(),
             std::mem::discriminant(&other),
