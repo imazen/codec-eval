@@ -79,6 +79,8 @@ webp = { version = "0.3", optional = true }
 
 # AVIF encoder (native bindings via ravif for rav1e)
 ravif = { path = "/home/lilith/work/ravif/ravif", default-features = false, optional = true }
+# AVIF decoder (pure Rust via zenavif)
+zenavif = { path = "/home/lilith/work/zenavif", default-features = false, optional = true }
 libavif-image = { version = "0.13", optional = true }
 
 # JPEG XL encoder
@@ -93,8 +95,8 @@ default = ["jpeg", "webp"]
 # Format feature groups
 jpeg = ["mozjpeg", "jpegli"]
 webp = ["dep:webp"]
-avif = ["ravif"]
-avif-imazen = ["ravif", "ravif/imazen"]
+avif = ["ravif", "ravif/threading", "dep:zenavif"]
+avif-imazen = ["ravif", "ravif/imazen", "ravif/threading", "dep:zenavif"]
 
 # Individual encoders
 mozjpeg = ["dep:mozjpeg"]

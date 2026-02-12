@@ -138,15 +138,25 @@ fn encode_avif_ravif(
         .with_quality(quality as f32)
         .with_speed(speed);
 
-    // Apply imazen fork enhancements when using the imazen variant
+    // When the imazen feature is compiled in, the default Encoder has
+    // QM/VAQ/StillImage enabled. The baseline rav1e variant should use
+    // upstream defaults (no QM, no VAQ, Psychovisual tune).
     #[cfg(feature = "avif-imazen")]
-    if matches!(variant, AvifEncoder::Rav1eImazen) {
-        encoder = encoder
-            .with_qm(true)
-            .with_vaq(true, 0.5)
-            .with_still_image_tuning(true);
+    {
+        if matches!(variant, AvifEncoder::Rav1eImazen) {
+            encoder = encoder
+                .with_qm(true)
+                .with_vaq(true, 0.5)
+                .with_still_image_tuning(true);
+        } else {
+            // Baseline: disable imazen features to match upstream rav1e behavior
+            encoder = encoder
+                .with_qm(false)
+                .with_vaq(false, 1.0)
+                .with_still_image_tuning(false);
+        }
     }
-    let _ = variant; // suppress unused warning when avif-imazen not enabled
+    let _ = variant;
 
     let result = encoder
         .encode_rgba(img)
@@ -160,17 +170,70 @@ fn encode_avif_ravif(
 
 #[cfg(feature = "ravif")]
 fn decode_avif(data: &[u8]) -> codec_eval::error::Result<ImageData> {
-    // Use image crate for decoding AVIF
-    let img = image::load_from_memory_with_format(data, image::ImageFormat::Avif).map_err(|e| {
+    let decoded = zenavif::decode(data).map_err(|e| {
         codec_eval::error::Error::Codec {
             codec: "avif".to_string(),
             message: format!("Decoding failed: {}", e),
         }
     })?;
 
-    let rgb = img.to_rgb8();
-    let (width, height) = (rgb.width() as usize, rgb.height() as usize);
-    let pixels = rgb.into_raw();
+    let (width, height, pixels) = match decoded {
+        zenavif::PixelData::Rgb8(img) => {
+            let w = img.width();
+            let h = img.height();
+            let mut rgb_data = Vec::with_capacity(w * h * 3);
+            for pixel in img.pixels() {
+                rgb_data.push(pixel.r);
+                rgb_data.push(pixel.g);
+                rgb_data.push(pixel.b);
+            }
+            (w, h, rgb_data)
+        }
+        zenavif::PixelData::Rgba8(img) => {
+            let w = img.width();
+            let h = img.height();
+            let mut rgb_data = Vec::with_capacity(w * h * 3);
+            for pixel in img.pixels() {
+                rgb_data.push(pixel.r);
+                rgb_data.push(pixel.g);
+                rgb_data.push(pixel.b);
+            }
+            (w, h, rgb_data)
+        }
+        zenavif::PixelData::Rgb16(img) => {
+            // 10/12-bit decoded as u16, scale down to 8-bit
+            let w = img.width();
+            let h = img.height();
+            let mut rgb_data = Vec::with_capacity(w * h * 3);
+            for pixel in img.pixels() {
+                // Assume 10-bit range (0-1023), scale to 0-255
+                rgb_data.push((pixel.r >> 2).min(255) as u8);
+                rgb_data.push((pixel.g >> 2).min(255) as u8);
+                rgb_data.push((pixel.b >> 2).min(255) as u8);
+            }
+            (w, h, rgb_data)
+        }
+        zenavif::PixelData::Rgba16(img) => {
+            let w = img.width();
+            let h = img.height();
+            let mut rgb_data = Vec::with_capacity(w * h * 3);
+            for pixel in img.pixels() {
+                rgb_data.push((pixel.r >> 2).min(255) as u8);
+                rgb_data.push((pixel.g >> 2).min(255) as u8);
+                rgb_data.push((pixel.b >> 2).min(255) as u8);
+            }
+            (w, h, rgb_data)
+        }
+        other => {
+            return Err(codec_eval::error::Error::Codec {
+                codec: "avif".to_string(),
+                message: format!(
+                    "Unsupported decoded format: {:?}",
+                    std::mem::discriminant(&other)
+                ),
+            });
+        }
+    };
 
     Ok(ImageData::RgbSlice {
         data: pixels,
