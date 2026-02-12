@@ -60,6 +60,7 @@ pub fn codec_color(id: &str) -> &'static str {
         "avif-rav1e-imazen" => "#d35400",  // dark orange
         "avif-rav1e-qm" => "#c0392b",     // dark red
         "avif-rav1e-vaq" => "#8e44ad",     // purple
+        "avif-rav1e-qm-vb" => "#16a085",  // green-teal
         "avif-rav1e-still" => "#2980b9",   // blue
         "avif-svt" => "#1abc9c",          // teal
 

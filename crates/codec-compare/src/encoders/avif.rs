@@ -37,9 +37,7 @@ impl AvifEncoder {
         #[cfg(feature = "avif-imazen")]
         {
             v.push(Self::Rav1eImazen);
-            v.push(Self::Rav1eQmOnly);
             v.push(Self::Rav1eVaqOnly);
-            v.push(Self::Rav1eStillOnly);
         }
         v
     }
@@ -53,7 +51,7 @@ impl AvifEncoder {
             #[cfg(feature = "avif-imazen")]
             Self::Rav1eQmOnly => "avif-rav1e-qm",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eVaqOnly => "avif-rav1e-vaq",
+            Self::Rav1eVaqOnly => "avif-rav1e-qm-vb",
             #[cfg(feature = "avif-imazen")]
             Self::Rav1eStillOnly => "avif-rav1e-still",
         }
@@ -68,7 +66,7 @@ impl AvifEncoder {
             #[cfg(feature = "avif-imazen")]
             Self::Rav1eQmOnly => "AVIF (rav1e QM only)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eVaqOnly => "AVIF (rav1e VAQ only)",
+            Self::Rav1eVaqOnly => "AVIF (rav1e QM+VarBoost)",
             #[cfg(feature = "avif-imazen")]
             Self::Rav1eStillOnly => "AVIF (rav1e StillImage only)",
         }
@@ -170,9 +168,9 @@ fn encode_avif_ravif(
     {
         let (qm, vaq, vaq_str, still) = match variant {
             AvifEncoder::Rav1e => (false, false, 1.0, false),
-            AvifEncoder::Rav1eImazen => (true, true, 0.5, true),
+            AvifEncoder::Rav1eImazen => (true, false, 1.0, false),
             AvifEncoder::Rav1eQmOnly => (true, false, 1.0, false),
-            AvifEncoder::Rav1eVaqOnly => (false, true, 0.5, false),
+            AvifEncoder::Rav1eVaqOnly => (true, true, 0.3, false),
             AvifEncoder::Rav1eStillOnly => (false, false, 1.0, true),
         };
         encoder = encoder
