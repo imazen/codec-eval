@@ -56,8 +56,9 @@ pub fn codec_color(id: &str) -> &'static str {
 
         // AVIF variants
         "avif-aom" => "#9b59b6",   // purple
-        "avif-rav1e" => "#e67e22", // orange
-        "avif-svt" => "#1abc9c",   // teal
+        "avif-rav1e" => "#e67e22",        // orange
+        "avif-rav1e-imazen" => "#d35400", // dark orange
+        "avif-svt" => "#1abc9c",          // teal
 
         // JPEG XL
         "jpegxl" => "#f39c12", // golden yellow

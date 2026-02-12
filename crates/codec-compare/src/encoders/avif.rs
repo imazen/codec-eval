@@ -16,18 +16,26 @@ use codec_eval::eval::session::EncodeRequest;
 pub enum AvifEncoder {
     /// rav1e - Pure Rust AV1 encoder (default for native builds)
     Rav1e,
+    /// rav1e with imazen fork enhancements (QM, VAQ, StillImage tuning)
+    #[cfg(feature = "avif-imazen")]
+    Rav1eImazen,
 }
 
 impl AvifEncoder {
-    /// All available encoder variants (native only supports rav1e).
-    pub fn all() -> &'static [AvifEncoder] {
-        &[Self::Rav1e]
+    /// All available encoder variants.
+    pub fn all() -> Vec<AvifEncoder> {
+        let mut v = vec![Self::Rav1e];
+        #[cfg(feature = "avif-imazen")]
+        v.push(Self::Rav1eImazen);
+        v
     }
 
     /// Get the codec ID string.
     pub fn id(&self) -> &'static str {
         match self {
             Self::Rav1e => "avif-rav1e",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eImazen => "avif-rav1e-imazen",
         }
     }
 
@@ -35,6 +43,8 @@ impl AvifEncoder {
     pub fn name(&self) -> &'static str {
         match self {
             Self::Rav1e => "AVIF (rav1e)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eImazen => "AVIF (rav1e-imazen)",
         }
     }
 }
@@ -67,7 +77,7 @@ impl AvifCodec {
         self
     }
 
-    /// Create all AVIF encoder variants (only rav1e for native).
+    /// Create all AVIF encoder variants.
     pub fn all() -> Vec<Self> {
         AvifEncoder::all().iter().map(|&e| Self::new(e)).collect()
     }
@@ -89,9 +99,10 @@ impl CodecImpl for AvifCodec {
 
     fn encode_fn(&self) -> EncodeFn {
         let speed = self.speed;
+        let encoder = self.encoder;
 
         Box::new(move |image: &ImageData, request: &EncodeRequest| {
-            encode_avif_ravif(image, request.quality, speed)
+            encode_avif_ravif(image, request.quality, speed, encoder)
         })
     }
 
@@ -105,6 +116,7 @@ fn encode_avif_ravif(
     image: &ImageData,
     quality: f64,
     speed: u8,
+    variant: AvifEncoder,
 ) -> codec_eval::error::Result<Vec<u8>> {
     use ravif::{Encoder, Img};
     use rgb::RGBA8;
@@ -119,12 +131,22 @@ fn encode_avif_ravif(
         .map(|c| RGBA8::new(c[0], c[1], c[2], 255))
         .collect();
 
-    let img = Img::new(&rgba_data, width, height);
+    let img = Img::new(rgba_data.as_slice(), width, height);
 
     // ravif quality is 0-100 where 100 is best
-    let encoder = Encoder::new()
+    let mut encoder = Encoder::new()
         .with_quality(quality as f32)
         .with_speed(speed);
+
+    // Apply imazen fork enhancements when using the imazen variant
+    #[cfg(feature = "avif-imazen")]
+    if matches!(variant, AvifEncoder::Rav1eImazen) {
+        encoder = encoder
+            .with_qm(true)
+            .with_vaq(true, 0.5)
+            .with_still_image_tuning(true);
+    }
+    let _ = variant; // suppress unused warning when avif-imazen not enabled
 
     let result = encoder
         .encode_rgba(img)
@@ -177,7 +199,7 @@ impl AvifCodec {
     }
 
     pub fn all() -> Vec<Self> {
-        AvifEncoder::all().iter().map(|&e| Self::new(e)).collect()
+        AvifEncoder::all().into_iter().map(|e| Self::new(e)).collect()
     }
 }
 

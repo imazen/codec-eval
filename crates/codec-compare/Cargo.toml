@@ -78,7 +78,7 @@ zenjpeg = { version = "0.3", optional = true }
 webp = { version = "0.3", optional = true }
 
 # AVIF encoder (native bindings via ravif for rav1e)
-ravif = { version = "0.11", optional = true }
+ravif = { path = "/home/lilith/work/ravif/ravif", default-features = false, optional = true }
 libavif-image = { version = "0.13", optional = true }
 
 # JPEG XL encoder
@@ -94,6 +94,7 @@ default = ["jpeg", "webp"]
 jpeg = ["mozjpeg", "jpegli"]
 webp = ["dep:webp"]
 avif = ["ravif"]
+avif-imazen = ["ravif", "ravif/imazen"]
 
 # Individual encoders
 mozjpeg = ["dep:mozjpeg"]
