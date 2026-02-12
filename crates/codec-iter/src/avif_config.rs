@@ -20,43 +20,49 @@ pub struct AvifConfig {
     pub enable_qm: bool,
     pub rdo_tx: Option<bool>,
     pub cdef: Option<bool>,
+    pub sgr_full: Option<bool>,
+    pub lru_on_skip: Option<bool>,
+    pub segmentation_complex: Option<bool>,
+    pub encode_bottomup: Option<bool>,
+    pub enable_trellis: bool,
     pub bit_depth_8: bool,
 }
 
 impl AvifConfig {
     /// Create config from a named preset.
     pub fn from_preset(name: &str) -> Result<Self> {
+        let base = Self {
+            speed: 6,
+            enable_qm: true,
+            rdo_tx: None,
+            cdef: None,
+            sgr_full: None,
+            lru_on_skip: None,
+            segmentation_complex: None,
+            encode_bottomup: None,
+            enable_trellis: false,
+            bit_depth_8: false,
+        };
         match name {
-            "baseline" => Ok(Self {
-                speed: 6,
-                enable_qm: false,
-                rdo_tx: None,
-                cdef: None,
-                bit_depth_8: false,
-            }),
-            "qm" => Ok(Self {
-                speed: 6,
-                enable_qm: true,
-                rdo_tx: None,
-                cdef: None,
-                bit_depth_8: false,
-            }),
-            "qm-rdotx" => Ok(Self {
-                speed: 6,
-                enable_qm: true,
-                rdo_tx: Some(true),
-                cdef: None,
-                bit_depth_8: false,
-            }),
-            "qm-cdef-rdotx" => Ok(Self {
-                speed: 6,
-                enable_qm: true,
-                rdo_tx: Some(true),
-                cdef: Some(true),
-                bit_depth_8: false,
+            "baseline" => Ok(Self { enable_qm: false, ..base }),
+            "qm" => Ok(base),
+            "qm-rdotx" => Ok(Self { rdo_tx: Some(true), ..base }),
+            "qm-cdef-rdotx" => Ok(Self { rdo_tx: Some(true), cdef: Some(true), ..base }),
+            "qm-sgr" => Ok(Self { sgr_full: Some(true), ..base }),
+            "qm-lrf" => Ok(Self { sgr_full: Some(true), lru_on_skip: Some(true), ..base }),
+            "qm-seg" => Ok(Self { segmentation_complex: Some(true), ..base }),
+            "qm-bottomup" => Ok(Self { encode_bottomup: Some(true), ..base }),
+            "qm-trellis" => Ok(Self { enable_trellis: true, ..base }),
+            "qm-best" => Ok(Self {
+                sgr_full: Some(true),
+                lru_on_skip: Some(true),
+                segmentation_complex: Some(true),
+                enable_trellis: true,
+                ..base
             }),
             other => anyhow::bail!(
-                "Unknown AVIF preset: '{other}'. Available: baseline, qm, qm-rdotx, qm-cdef-rdotx"
+                "Unknown AVIF preset: '{other}'. Available: baseline, qm, qm-rdotx, \
+                 qm-cdef-rdotx, qm-sgr, qm-lrf, qm-seg, qm-bottomup, qm-trellis, qm-best"
             ),
         }
     }
@@ -73,6 +79,21 @@ fn avif_config_summary(config: &AvifConfig) -> String {
     }
     if config.cdef == Some(true) {
         features.push("cdef");
+    }
+    if config.sgr_full == Some(true) {
+        features.push("sgr");
+    }
+    if config.lru_on_skip == Some(true) {
+        features.push("lrf");
+    }
+    if config.segmentation_complex == Some(true) {
+        features.push("seg");
+    }
+    if config.encode_bottomup == Some(true) {
+        features.push("bottomup");
+    }
+    if config.enable_trellis {
+        features.push("trellis");
     }
     let feat_str = if features.is_empty() {
         "stock".to_string()
@@ -158,6 +179,11 @@ pub fn build_avif_codec(config: &AvifConfig) -> Codec {
     let enable_qm = config.enable_qm;
     let rdo_tx = config.rdo_tx;
     let cdef = config.cdef;
+    let sgr_full = config.sgr_full;
+    let lru_on_skip = config.lru_on_skip;
+    let segmentation_complex = config.segmentation_complex;
+    let encode_bottomup = config.encode_bottomup;
+    let enable_trellis = config.enable_trellis;
     let bit_depth_8 = config.bit_depth_8;
 
     Codec {
@@ -182,10 +208,26 @@ pub fn build_avif_codec(config: &AvifConfig) -> Codec {
                 if let Some(cdef_on) = cdef {
                     enc = enc.with_cdef(Some(cdef_on));
                 }
+                if let Some(v) = sgr_full {
+                    enc = enc.with_sgr_full(Some(v));
+                }
+                if let Some(v) = lru_on_skip {
+                    enc = enc.with_lru_on_skip(Some(v));
+                }
+                if let Some(v) = segmentation_complex {
+                    enc = enc.with_segmentation_complex(Some(v));
+                }
+                if let Some(v) = encode_bottomup {
+                    enc = enc.with_encode_bottomup(Some(v));
+                }
+                if enable_trellis {
+                    enc = enc.with_trellis(true);
+                }
             }
             #[cfg(not(feature = "avif-imazen"))]
             {
-                let _ = (enable_qm, rdo_tx, cdef);
+                let _ = (enable_qm, rdo_tx, cdef, sgr_full, lru_on_skip,
+                         segmentation_complex, encode_bottomup, enable_trellis);
             }
 
             let result = enc
