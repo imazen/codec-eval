@@ -1,5 +1,5 @@
 [workspace]
-members = [".", "crates/codec-eval-cli", "crates/codec-compare"]
+members = [".", "crates/codec-eval-cli", "crates/codec-compare", "crates/codec-iter"]
 resolver = "2"
 
 [workspace.package]

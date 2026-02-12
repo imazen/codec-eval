@@ -523,7 +523,7 @@ dependencies = [
  "webp",
  "which",
  "zenavif",
- "zenjpeg",
+ "zenjpeg 0.3.1",
 ]
 
 [[package]]
@@ -569,6 +569,24 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "codec-iter"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "clap",
+ "fast-ssim2",
+ "imgref",
+ "png",
+ "rgb",
+ "serde",
+ "serde_json",
+ "zencodecs",
+ "zenjpeg 0.6.1",
+ "zenpnm",
 ]
 
 [[package]]
@@ -883,6 +901,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3f9eec918d3f24069decb9af1554cad7c880e2da24a9afd88aca000531ab82c1"
 
 [[package]]
+name = "foldhash"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77ce24cb58228fbb8aa041425bb1050850ac19177686ea6e0f41a70416f56fdb"
+
+[[package]]
 name = "getrandom"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -903,6 +927,15 @@ dependencies = [
  "libc",
  "r-efi",
  "wasip2",
+]
+
+[[package]]
+name = "gif"
+version = "0.14.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f5df2ba84018d80c213569363bdcd0c64e6933c67fe4c1d60ecf822971a3c35e"
+dependencies = [
+ "weezl",
 ]
 
 [[package]]
@@ -927,6 +960,9 @@ name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
+dependencies = [
+ "foldhash",
+]
 
 [[package]]
 name = "heck"
@@ -1066,7 +1102,7 @@ dependencies = [
  "bytemuck",
  "enough",
  "imgref",
- "linear-srgb",
+ "linear-srgb 0.3.2",
  "multiversed",
  "multiversion",
  "rgb",
@@ -1212,6 +1248,19 @@ name = "linear-srgb"
 version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "153732436b90b689934ad2d2997d5f0d2416163017ac76e6c0475dce9e7999c3"
+dependencies = [
+ "bytemuck",
+ "multiversed",
+ "multiversion",
+ "num-traits",
+ "wide 1.1.1",
+]
+
+[[package]]
+name = "linear-srgb"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d458e5e9228c58b8b1d49118eb26204f152ddc2b1ab6f451563ec647ccc76519"
 dependencies = [
  "bytemuck",
  "multiversed",
@@ -1571,6 +1620,12 @@ checksum = "7186d3822593aa4393561d186d1393b3923e9d6163d3fbfd6e825e3e6cf3e6a8"
 dependencies = [
  "num-traits",
 ]
+
+[[package]]
+name = "quantizr"
+version = "1.4.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b28ab4659f6754222a9e96c7a48f68dba03a620f23803c67ccd4ca7c35d55f5f"
 
 [[package]]
 name = "quick-error"
@@ -2266,6 +2321,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "weezl"
+version = "0.1.12"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a28ac98ddc8b9274cb41bb4d9d4d5c425b6020c50c46f25559911905610b4a88"
+
+[[package]]
 name = "whereat"
 version = "0.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2543,6 +2604,36 @@ dependencies = [
 ]
 
 [[package]]
+name = "zencodecs"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "enough",
+ "imgref",
+ "rgb",
+ "thiserror 2.0.18",
+ "whereat",
+ "zencodec-types",
+ "zengif",
+ "zenjpeg 0.6.1",
+ "zenpng",
+ "zenwebp",
+]
+
+[[package]]
+name = "zengif"
+version = "0.6.0"
+dependencies = [
+ "bytemuck",
+ "enough",
+ "gif",
+ "quantizr",
+ "rgb",
+ "whereat",
+ "zencodec-types",
+]
+
+[[package]]
 name = "zenjpeg"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2553,7 +2644,7 @@ dependencies = [
  "bytemuck",
  "enough",
  "imgref",
- "linear-srgb",
+ "linear-srgb 0.3.2",
  "magetypes 0.3.0",
  "multiversed",
  "multiversion",
@@ -2564,6 +2655,81 @@ dependencies = [
  "whereat",
  "wide 1.1.1",
  "yuv",
+]
+
+[[package]]
+name = "zenjpeg"
+version = "0.6.1"
+dependencies = [
+ "aligned-vec",
+ "archmage 0.5.1",
+ "bytemuck",
+ "enough",
+ "imgref",
+ "linear-srgb 0.3.2",
+ "magetypes 0.5.1",
+ "multiversed",
+ "multiversion",
+ "rgb",
+ "safe_unaligned_simd",
+ "thiserror 2.0.18",
+ "tinyvec",
+ "whereat",
+ "wide 1.1.1",
+ "yuv",
+ "zencodec-types",
+]
+
+[[package]]
+name = "zenpng"
+version = "0.1.0"
+dependencies = [
+ "bytemuck",
+ "enough",
+ "imgref",
+ "png",
+ "rgb",
+ "thiserror 2.0.18",
+ "zencodec-types",
+ "zenquant",
+]
+
+[[package]]
+name = "zenpnm"
+version = "0.1.0"
+dependencies = [
+ "enough",
+ "imgref",
+ "rgb",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "zenquant"
+version = "0.1.0"
+dependencies = [
+ "imgref",
+ "linear-srgb 0.4.0",
+ "rgb",
+ "thiserror 2.0.18",
+]
+
+[[package]]
+name = "zenwebp"
+version = "0.3.2"
+dependencies = [
+ "archmage 0.5.1",
+ "byteorder-lite",
+ "enough",
+ "hashbrown",
+ "libm",
+ "magetypes 0.5.1",
+ "rgb",
+ "safe_unaligned_simd",
+ "thiserror 2.0.18",
+ "whereat",
+ "yuv",
+ "zencodec-types",
 ]
 
 [[package]]

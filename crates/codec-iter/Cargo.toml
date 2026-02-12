@@ -1,0 +1,45 @@
+[package]
+name = "codec-iter"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "Fast codec iteration tool for encoder development"
+
+[[bin]]
+name = "codec-iter"
+path = "src/main.rs"
+
+[dependencies]
+zencodecs = { path = "../../../zencodecs", features = ["jpeg"] }
+zenjpeg = { path = "../../../zenjpeg/zenjpeg" }
+zenpnm = { path = "../../../zenpnm", features = ["imgref"] }
+fast-ssim2 = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+chrono = { workspace = true }
+imgref = { workspace = true }
+rgb = { workspace = true }
+anyhow = "1"
+png = "0.18"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+must_use_candidate = "allow"
+module_name_repetitions = "allow"
+uninlined_format_args = "allow"
+cast_precision_loss = "allow"
+cast_possible_truncation = "allow"
+cast_sign_loss = "allow"
+cast_lossless = "allow"
+too_many_lines = "allow"
+type_complexity = "allow"
+default_trait_access = "allow"
+redundant_closure_for_method_calls = "allow"
+map_unwrap_or = "allow"
