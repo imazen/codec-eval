@@ -23,6 +23,21 @@ rgb = { workspace = true }
 anyhow = "1"
 png = "0.18"
 
+# AVIF support (optional)
+ravif = { path = "../../../ravif/ravif", default-features = false, features = ["threading"], optional = true }
+zenavif = { path = "../../../zenavif", optional = true }
+
+# GPU-accelerated SSIM2 (optional, requires CUDA)
+ssimulacra2-cuda = { path = "../../../turbo-metrics/crates/ssimulacra2-cuda", optional = true }
+cudarse-driver = { path = "../../../turbo-metrics/crates/cudarse/cudarse-driver", optional = true }
+cudarse-npp = { path = "../../../turbo-metrics/crates/cudarse/cudarse-npp", features = ["isu"], optional = true }
+
+[features]
+default = []
+gpu = ["dep:ssimulacra2-cuda", "dep:cudarse-driver", "dep:cudarse-npp"]
+avif = ["dep:ravif", "dep:zenavif"]
+avif-imazen = ["avif", "ravif/imazen"]
+
 [lints.rust]
 unsafe_code = "forbid"
 

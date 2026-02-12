@@ -1,5 +1,5 @@
-use zencodecs::config::jpeg::{ChromaSubsampling, EncoderConfig};
 use zencodecs::config::CodecConfig;
+use zencodecs::config::jpeg::{ChromaSubsampling, EncoderConfig};
 use zenjpeg::encoder::XybSubsampling;
 
 pub struct JpegConfig {

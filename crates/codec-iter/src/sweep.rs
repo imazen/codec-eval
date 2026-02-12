@@ -1,39 +1,27 @@
 use anyhow::Result;
-use zencodecs::config::jpeg::ChromaSubsampling;
 
-use crate::config::JpegConfig;
-use crate::eval::{self, EvalResult};
+use crate::eval::{self, Codec, EvalResult};
 use crate::source::SourceImage;
-
-pub struct SweepConfig {
-    pub subsamplings: Vec<ChromaSubsampling>,
-    pub xyb_modes: Vec<bool>,
-}
 
 pub struct SweepResult {
     pub configs: Vec<(String, EvalResult)>,
 }
 
+/// Run eval across multiple codec configurations.
+///
+/// Each entry in `codecs` is a (name, Codec) pair. The name is used for display.
 pub fn run_sweep(
     images: &[SourceImage],
-    sweep: &SweepConfig,
+    codecs: &[Codec],
     quality_levels: &[u8],
+    use_gpu: bool,
 ) -> Result<SweepResult> {
     let mut configs = Vec::new();
 
-    for &subsampling in &sweep.subsamplings {
-        for &xyb in &sweep.xyb_modes {
-            let config = JpegConfig {
-                subsampling,
-                xyb,
-                ..JpegConfig::default()
-            };
-
-            let summary = crate::config::config_summary(&config);
-            eprintln!("  Evaluating {summary}...");
-            let result = eval::run_eval(images, &config, quality_levels)?;
-            configs.push((summary, result));
-        }
+    for codec in codecs {
+        eprintln!("  Evaluating {}...", codec.summary);
+        let result = eval::run_eval(images, codec, quality_levels, use_gpu)?;
+        configs.push((codec.summary.clone(), result));
     }
 
     Ok(SweepResult { configs })
@@ -41,7 +29,7 @@ pub fn run_sweep(
 
 pub fn print_sweep_results(result: &SweepResult, n_images: usize, n_qualities: usize) {
     println!(
-        "codec-iter sweep -- jpeg ({n_images} images, {n_qualities} qualities, {} configs)\n",
+        "codec-iter sweep -- ({n_images} images, {n_qualities} qualities, {} configs)\n",
         result.configs.len()
     );
     println!(
