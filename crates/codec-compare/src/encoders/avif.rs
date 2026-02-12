@@ -16,9 +16,18 @@ use codec_eval::eval::session::EncodeRequest;
 pub enum AvifEncoder {
     /// rav1e - Pure Rust AV1 encoder (default for native builds)
     Rav1e,
-    /// rav1e with imazen fork enhancements (QM, VAQ, StillImage tuning)
+    /// rav1e with all imazen features (QM + VAQ + StillImage)
     #[cfg(feature = "avif-imazen")]
     Rav1eImazen,
+    /// rav1e with QM only
+    #[cfg(feature = "avif-imazen")]
+    Rav1eQmOnly,
+    /// rav1e with VAQ only
+    #[cfg(feature = "avif-imazen")]
+    Rav1eVaqOnly,
+    /// rav1e with StillImage tuning only
+    #[cfg(feature = "avif-imazen")]
+    Rav1eStillOnly,
 }
 
 impl AvifEncoder {
@@ -26,7 +35,12 @@ impl AvifEncoder {
     pub fn all() -> Vec<AvifEncoder> {
         let mut v = vec![Self::Rav1e];
         #[cfg(feature = "avif-imazen")]
-        v.push(Self::Rav1eImazen);
+        {
+            v.push(Self::Rav1eImazen);
+            v.push(Self::Rav1eQmOnly);
+            v.push(Self::Rav1eVaqOnly);
+            v.push(Self::Rav1eStillOnly);
+        }
         v
     }
 
@@ -36,6 +50,12 @@ impl AvifEncoder {
             Self::Rav1e => "avif-rav1e",
             #[cfg(feature = "avif-imazen")]
             Self::Rav1eImazen => "avif-rav1e-imazen",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmOnly => "avif-rav1e-qm",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eVaqOnly => "avif-rav1e-vaq",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eStillOnly => "avif-rav1e-still",
         }
     }
 
@@ -44,7 +64,13 @@ impl AvifEncoder {
         match self {
             Self::Rav1e => "AVIF (rav1e)",
             #[cfg(feature = "avif-imazen")]
-            Self::Rav1eImazen => "AVIF (rav1e-imazen)",
+            Self::Rav1eImazen => "AVIF (rav1e-imazen all)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eQmOnly => "AVIF (rav1e QM only)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eVaqOnly => "AVIF (rav1e VAQ only)",
+            #[cfg(feature = "avif-imazen")]
+            Self::Rav1eStillOnly => "AVIF (rav1e StillImage only)",
         }
     }
 }
@@ -138,23 +164,21 @@ fn encode_avif_ravif(
         .with_quality(quality as f32)
         .with_speed(speed);
 
-    // When the imazen feature is compiled in, the default Encoder has
-    // QM/VAQ/StillImage enabled. The baseline rav1e variant should use
-    // upstream defaults (no QM, no VAQ, Psychovisual tune).
+    // When the imazen feature is compiled in, explicitly set each feature
+    // per variant. Baseline rav1e disables everything to match upstream.
     #[cfg(feature = "avif-imazen")]
     {
-        if matches!(variant, AvifEncoder::Rav1eImazen) {
-            encoder = encoder
-                .with_qm(true)
-                .with_vaq(true, 0.5)
-                .with_still_image_tuning(true);
-        } else {
-            // Baseline: disable imazen features to match upstream rav1e behavior
-            encoder = encoder
-                .with_qm(false)
-                .with_vaq(false, 1.0)
-                .with_still_image_tuning(false);
-        }
+        let (qm, vaq, vaq_str, still) = match variant {
+            AvifEncoder::Rav1e => (false, false, 1.0, false),
+            AvifEncoder::Rav1eImazen => (true, true, 0.5, true),
+            AvifEncoder::Rav1eQmOnly => (true, false, 1.0, false),
+            AvifEncoder::Rav1eVaqOnly => (false, true, 0.5, false),
+            AvifEncoder::Rav1eStillOnly => (false, false, 1.0, true),
+        };
+        encoder = encoder
+            .with_qm(qm)
+            .with_vaq(vaq, vaq_str)
+            .with_still_image_tuning(still);
     }
     let _ = variant;
 
