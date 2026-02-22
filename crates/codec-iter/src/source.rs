@@ -175,7 +175,7 @@ fn load_png(path: &Path, name: &str) -> Result<SourceImage> {
 
 fn load_ppm(path: &Path, name: &str) -> Result<SourceImage> {
     let data = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-    let img: ImgVec<Rgb8> = zenpnm::decode_img(&data, zenpnm::Unstoppable)
+    let img: ImgVec<Rgb8> = zenbitmaps::decode_img(&data, zenbitmaps::Unstoppable)
         .map_err(|e| anyhow::anyhow!("PPM decode error for {name}: {e}"))?;
 
     let width = img.width();
@@ -194,7 +194,7 @@ fn cache_as_ppm(img: &SourceImage, cache_dir: &Path, name: &str) -> Result<()> {
     let ppm_path = cache_dir
         .join(Path::new(name).file_stem().unwrap())
         .with_extension("ppm");
-    let ppm_data = zenpnm::encode_ppm_img(img.pixels.as_ref(), zenpnm::Unstoppable)
+    let ppm_data = zenbitmaps::encode_ppm_img(img.pixels.as_ref(), zenbitmaps::Unstoppable)
         .map_err(|e| anyhow::anyhow!("PPM encode error: {e}"))?;
     fs::write(&ppm_path, &ppm_data)?;
     Ok(())

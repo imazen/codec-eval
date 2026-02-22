@@ -74,7 +74,7 @@ just eval-baseline
 just eval
 ```
 
-`codec-iter` uses [zencodecs](https://github.com/imazen/zencodecs) for encode/decode and [fast-ssim2](https://github.com/imazen/fast-ssim2) for SSIMULACRA2 scoring. Source images are loaded from PNG (cached as PPM for faster reloads via [zenpnm](https://github.com/imazen/zenpnm)). Image tiers are pre-selected from CID22 via [glassa](https://github.com/imazen/glassa) clustering — 3/5/15 representative images depending on `--limit`.
+`codec-iter` uses [zencodecs](https://github.com/imazen/zencodecs) for encode/decode and [fast-ssim2](https://github.com/imazen/fast-ssim2) for SSIMULACRA2 scoring. Source images are loaded from PNG (cached as PPM for faster reloads via [zenbitmaps](https://github.com/imazen/zenbitmaps)). Image tiers are pre-selected from CID22 via [glassa](https://github.com/imazen/glassa) clustering — 3/5/15 representative images depending on `--limit`.
 
 **Subcommands:**
 

@@ -19,7 +19,7 @@ imgref = { workspace = true }
 rgb = { workspace = true }
 anyhow = "1"
 png = "0.18"
-zenpnm = { path = "../../../zenpnm", features = ["imgref"] }
+zenbitmaps = { path = "../../../zenbitmaps", features = ["imgref"] }
 
 # JPEG support (optional — depends on zencodecs which needs updated zencodec-types traits)
 zencodecs = { path = "../../../zencodecs", features = ["jpeg"], optional = true }
