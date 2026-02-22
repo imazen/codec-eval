@@ -26,7 +26,7 @@ zencodecs = { path = "../../../zencodecs", features = ["jpeg"], optional = true 
 zenjpeg = { path = "../../../zenjpeg/zenjpeg", optional = true }
 
 # AVIF support (optional)
-ravif = { path = "../../../ravif/ravif", default-features = false, features = ["threading"], optional = true }
+ravif = { path = "../../../ravif/ravif", package = "zenravif", default-features = false, features = ["threading"], optional = true }
 zenavif = { path = "../../../zenavif", optional = true }
 
 # GPU-accelerated SSIM2 (optional, requires CUDA)

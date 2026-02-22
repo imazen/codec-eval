@@ -78,7 +78,7 @@ zenjpeg = { version = "0.3", optional = true }
 webp = { version = "0.3", optional = true }
 
 # AVIF encoder (native bindings via ravif for rav1e)
-ravif = { path = "/home/lilith/work/ravif/ravif", default-features = false, optional = true }
+ravif = { path = "/home/lilith/work/ravif/ravif", package = "zenravif", default-features = false, optional = true }
 # AVIF decoder (pure Rust via zenavif)
 zenavif = { path = "/home/lilith/work/zenavif", default-features = false, optional = true }
 libavif-image = { version = "0.13", optional = true }
