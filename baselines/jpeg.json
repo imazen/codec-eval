@@ -1,0 +1,608 @@
+{
+  "format": "jpeg",
+  "config_summary": "zenjpeg-420-ycbcr-prog",
+  "corpus_path": "/home/lilith/work/codec-corpus/CID22/CID22-512/training",
+  "created_at": "2026-02-12T18:04:36.348566804Z",
+  "points": [
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 50,
+      "bpp": 0.72332763671875,
+      "ssim2": 67.06036004649532,
+      "size_bytes": 23702,
+      "encode_ms": 3
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 52,
+      "bpp": 0.736419677734375,
+      "ssim2": 67.38743392475055,
+      "size_bytes": 24131,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 54,
+      "bpp": 0.759002685546875,
+      "ssim2": 68.11835406905223,
+      "size_bytes": 24871,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 56,
+      "bpp": 0.771820068359375,
+      "ssim2": 68.58742709761687,
+      "size_bytes": 25291,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 58,
+      "bpp": 0.79095458984375,
+      "ssim2": 69.40049019114143,
+      "size_bytes": 25918,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 60,
+      "bpp": 0.80694580078125,
+      "ssim2": 69.9732162679944,
+      "size_bytes": 26442,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 62,
+      "bpp": 0.834320068359375,
+      "ssim2": 70.97856502377205,
+      "size_bytes": 27339,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 64,
+      "bpp": 0.85357666015625,
+      "ssim2": 71.82510182301772,
+      "size_bytes": 27970,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 66,
+      "bpp": 0.8770751953125,
+      "ssim2": 72.71381239870738,
+      "size_bytes": 28740,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 68,
+      "bpp": 0.899139404296875,
+      "ssim2": 73.28217486384233,
+      "size_bytes": 29463,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 70,
+      "bpp": 0.930084228515625,
+      "ssim2": 73.79673446968864,
+      "size_bytes": 30477,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 72,
+      "bpp": 0.961181640625,
+      "ssim2": 74.63472890310629,
+      "size_bytes": 31496,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 74,
+      "bpp": 1.000274658203125,
+      "ssim2": 75.35872616050783,
+      "size_bytes": 32777,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 76,
+      "bpp": 1.033935546875,
+      "ssim2": 76.11058862586067,
+      "size_bytes": 33880,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 78,
+      "bpp": 1.088714599609375,
+      "ssim2": 77.0202295776076,
+      "size_bytes": 35675,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 80,
+      "bpp": 1.127288818359375,
+      "ssim2": 77.94195313626518,
+      "size_bytes": 36939,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 82,
+      "bpp": 1.181610107421875,
+      "ssim2": 78.62362551669472,
+      "size_bytes": 38719,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 84,
+      "bpp": 1.24658203125,
+      "ssim2": 79.66290207720692,
+      "size_bytes": 40848,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 86,
+      "bpp": 1.344757080078125,
+      "ssim2": 81.12835720608896,
+      "size_bytes": 44065,
+      "encode_ms": 2
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 88,
+      "bpp": 1.4676513671875,
+      "ssim2": 82.64559645048308,
+      "size_bytes": 48092,
+      "encode_ms": 3
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 90,
+      "bpp": 1.602813720703125,
+      "ssim2": 84.10990570556841,
+      "size_bytes": 52521,
+      "encode_ms": 3
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 92,
+      "bpp": 1.779388427734375,
+      "ssim2": 85.54120262613188,
+      "size_bytes": 58307,
+      "encode_ms": 3
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 94,
+      "bpp": 2.037567138671875,
+      "ssim2": 86.96299807358298,
+      "size_bytes": 66767,
+      "encode_ms": 3
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 96,
+      "bpp": 2.448333740234375,
+      "ssim2": 88.22990008073097,
+      "size_bytes": 80227,
+      "encode_ms": 4
+    },
+    {
+      "image": "pexels-photo-951408.png",
+      "quality": 98,
+      "bpp": 3.159210205078125,
+      "ssim2": 89.51974663055121,
+      "size_bytes": 103521,
+      "encode_ms": 4
+    },
+    {
+      "image": "53435.png",
+      "quality": 50,
+      "bpp": 0.90936279296875,
+      "ssim2": 55.521251980457016,
+      "size_bytes": 29798,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 52,
+      "bpp": 0.936248779296875,
+      "ssim2": 56.199861793150944,
+      "size_bytes": 30679,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 54,
+      "bpp": 0.970794677734375,
+      "ssim2": 56.980643779379506,
+      "size_bytes": 31811,
+      "encode_ms": 3
+    },
+    {
+      "image": "53435.png",
+      "quality": 56,
+      "bpp": 0.998748779296875,
+      "ssim2": 57.57808843469376,
+      "size_bytes": 32727,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 58,
+      "bpp": 1.032135009765625,
+      "ssim2": 58.541442826996004,
+      "size_bytes": 33821,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 60,
+      "bpp": 1.06439208984375,
+      "ssim2": 59.30023757436649,
+      "size_bytes": 34878,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 62,
+      "bpp": 1.110931396484375,
+      "ssim2": 60.14600410200452,
+      "size_bytes": 36403,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 64,
+      "bpp": 1.14654541015625,
+      "ssim2": 61.07819621295668,
+      "size_bytes": 37570,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 66,
+      "bpp": 1.195220947265625,
+      "ssim2": 62.01822179353418,
+      "size_bytes": 39165,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 68,
+      "bpp": 1.24072265625,
+      "ssim2": 62.975703772663564,
+      "size_bytes": 40656,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 70,
+      "bpp": 1.30023193359375,
+      "ssim2": 63.92936902415039,
+      "size_bytes": 42606,
+      "encode_ms": 2
+    },
+    {
+      "image": "53435.png",
+      "quality": 72,
+      "bpp": 1.35736083984375,
+      "ssim2": 65.06403349450781,
+      "size_bytes": 44478,
+      "encode_ms": 3
+    },
+    {
+      "image": "53435.png",
+      "quality": 74,
+      "bpp": 1.429107666015625,
+      "ssim2": 66.23548339006386,
+      "size_bytes": 46829,
+      "encode_ms": 3
+    },
+    {
+      "image": "53435.png",
+      "quality": 76,
+      "bpp": 1.499267578125,
+      "ssim2": 67.2611227346855,
+      "size_bytes": 49128,
+      "encode_ms": 3
+    },
+    {
+      "image": "53435.png",
+      "quality": 78,
+      "bpp": 1.586395263671875,
+      "ssim2": 68.28695573993978,
+      "size_bytes": 51983,
+      "encode_ms": 3
+    },
+    {
+      "image": "53435.png",
+      "quality": 80,
+      "bpp": 1.667816162109375,
+      "ssim2": 69.32422128963118,
+      "size_bytes": 54651,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 82,
+      "bpp": 1.773773193359375,
+      "ssim2": 70.58669461380366,
+      "size_bytes": 58123,
+      "encode_ms": 4
+    },
+    {
+      "image": "53435.png",
+      "quality": 84,
+      "bpp": 1.89678955078125,
+      "ssim2": 71.81773076354048,
+      "size_bytes": 62154,
+      "encode_ms": 6
+    },
+    {
+      "image": "53435.png",
+      "quality": 86,
+      "bpp": 2.072845458984375,
+      "ssim2": 73.54810617034306,
+      "size_bytes": 67923,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 88,
+      "bpp": 2.2945556640625,
+      "ssim2": 75.40503538703709,
+      "size_bytes": 75188,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 90,
+      "bpp": 2.54608154296875,
+      "ssim2": 77.11628334783371,
+      "size_bytes": 83430,
+      "encode_ms": 6
+    },
+    {
+      "image": "53435.png",
+      "quality": 92,
+      "bpp": 2.8748779296875,
+      "ssim2": 79.01612506781439,
+      "size_bytes": 94204,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 94,
+      "bpp": 3.355072021484375,
+      "ssim2": 81.28241026562165,
+      "size_bytes": 109939,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 96,
+      "bpp": 4.05987548828125,
+      "ssim2": 83.54637786043583,
+      "size_bytes": 133034,
+      "encode_ms": 5
+    },
+    {
+      "image": "53435.png",
+      "quality": 98,
+      "bpp": 5.167083740234375,
+      "ssim2": 85.40239624310625,
+      "size_bytes": 169315,
+      "encode_ms": 6
+    },
+    {
+      "image": "1963557.png",
+      "quality": 50,
+      "bpp": 0.88055419921875,
+      "ssim2": 65.3515872075697,
+      "size_bytes": 28854,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 52,
+      "bpp": 0.896697998046875,
+      "ssim2": 65.84914524098691,
+      "size_bytes": 29383,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 54,
+      "bpp": 0.919281005859375,
+      "ssim2": 66.97734645721933,
+      "size_bytes": 30123,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 56,
+      "bpp": 0.935394287109375,
+      "ssim2": 67.49132626554925,
+      "size_bytes": 30651,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 58,
+      "bpp": 0.956451416015625,
+      "ssim2": 68.30626326144356,
+      "size_bytes": 31341,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 60,
+      "bpp": 0.97808837890625,
+      "ssim2": 68.96555974988809,
+      "size_bytes": 32050,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 62,
+      "bpp": 1.005584716796875,
+      "ssim2": 69.86767826004754,
+      "size_bytes": 32951,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 64,
+      "bpp": 1.026336669921875,
+      "ssim2": 70.7730413665357,
+      "size_bytes": 33631,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 66,
+      "bpp": 1.056976318359375,
+      "ssim2": 71.53833067727481,
+      "size_bytes": 34635,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 68,
+      "bpp": 1.083892822265625,
+      "ssim2": 72.31236857024659,
+      "size_bytes": 35517,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 70,
+      "bpp": 1.120635986328125,
+      "ssim2": 72.99152726337618,
+      "size_bytes": 36721,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 72,
+      "bpp": 1.153228759765625,
+      "ssim2": 73.66929565793617,
+      "size_bytes": 37789,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 74,
+      "bpp": 1.1947021484375,
+      "ssim2": 74.61922028775066,
+      "size_bytes": 39148,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 76,
+      "bpp": 1.232666015625,
+      "ssim2": 75.27045191488088,
+      "size_bytes": 40392,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 78,
+      "bpp": 1.285064697265625,
+      "ssim2": 76.46352632951852,
+      "size_bytes": 42109,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 80,
+      "bpp": 1.32611083984375,
+      "ssim2": 77.2607788326544,
+      "size_bytes": 43454,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 82,
+      "bpp": 1.379180908203125,
+      "ssim2": 77.75585076186124,
+      "size_bytes": 45193,
+      "encode_ms": 2
+    },
+    {
+      "image": "1963557.png",
+      "quality": 84,
+      "bpp": 1.4473876953125,
+      "ssim2": 78.4146042765936,
+      "size_bytes": 47428,
+      "encode_ms": 3
+    },
+    {
+      "image": "1963557.png",
+      "quality": 86,
+      "bpp": 1.541015625,
+      "ssim2": 79.53604403185807,
+      "size_bytes": 50496,
+      "encode_ms": 3
+    },
+    {
+      "image": "1963557.png",
+      "quality": 88,
+      "bpp": 1.661865234375,
+      "ssim2": 80.50501614004942,
+      "size_bytes": 54456,
+      "encode_ms": 4
+    },
+    {
+      "image": "1963557.png",
+      "quality": 90,
+      "bpp": 1.79815673828125,
+      "ssim2": 81.38790344712936,
+      "size_bytes": 58922,
+      "encode_ms": 3
+    },
+    {
+      "image": "1963557.png",
+      "quality": 92,
+      "bpp": 1.97039794921875,
+      "ssim2": 82.25971895471203,
+      "size_bytes": 64566,
+      "encode_ms": 4
+    },
+    {
+      "image": "1963557.png",
+      "quality": 94,
+      "bpp": 2.22998046875,
+      "ssim2": 83.14032807297403,
+      "size_bytes": 73072,
+      "encode_ms": 4
+    },
+    {
+      "image": "1963557.png",
+      "quality": 96,
+      "bpp": 2.634979248046875,
+      "ssim2": 83.72291465754301,
+      "size_bytes": 86343,
+      "encode_ms": 5
+    },
+    {
+      "image": "1963557.png",
+      "quality": 98,
+      "bpp": 3.360260009765625,
+      "ssim2": 84.28211311018785,
+      "size_bytes": 110109,
+      "encode_ms": 6
+    }
+  ]
+}
