@@ -14,10 +14,17 @@
 //!
 //! Use [`calculate_butteraugli_icc`] for images with non-sRGB color profiles.
 
-use butteraugli::{ButteraugliParams, compute_butteraugli};
+use butteraugli::{ButteraugliParams, Img, RGB8, butteraugli as butteraugli_compare};
 
 use super::icc::ColorProfile;
 use crate::error::{Error, Result};
+
+/// Convert raw RGB bytes to Vec<RGB8>.
+fn rgb_bytes_to_pixels(rgb: &[u8]) -> Vec<RGB8> {
+    rgb.chunks_exact(3)
+        .map(|c| RGB8::new(c[0], c[1], c[2]))
+        .collect()
+}
 
 /// Calculate Butteraugli distance between two images.
 ///
@@ -60,13 +67,16 @@ pub fn calculate_butteraugli(
         });
     }
 
+    let img1 = Img::new(rgb_bytes_to_pixels(reference), width, height);
+    let img2 = Img::new(rgb_bytes_to_pixels(test), width, height);
     let params = ButteraugliParams::default();
-    let result = compute_butteraugli(reference, test, width, height, &params).map_err(|e| {
-        Error::MetricCalculation {
-            metric: "Butteraugli".to_string(),
-            reason: e.to_string(),
-        }
-    })?;
+    let result =
+        butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
+            Error::MetricCalculation {
+                metric: "Butteraugli".to_string(),
+                reason: e.to_string(),
+            }
+        })?;
 
     Ok(result.score)
 }
@@ -113,13 +123,16 @@ pub fn calculate_butteraugli_with_intensity(
         });
     }
 
+    let img1 = Img::new(rgb_bytes_to_pixels(reference), width, height);
+    let img2 = Img::new(rgb_bytes_to_pixels(test), width, height);
     let params = ButteraugliParams::default().with_intensity_target(intensity_target);
-    let result = compute_butteraugli(reference, test, width, height, &params).map_err(|e| {
-        Error::MetricCalculation {
-            metric: "Butteraugli".to_string(),
-            reason: e.to_string(),
-        }
-    })?;
+    let result =
+        butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
+            Error::MetricCalculation {
+                metric: "Butteraugli".to_string(),
+                reason: e.to_string(),
+            }
+        })?;
 
     Ok(result.score)
 }
