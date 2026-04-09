@@ -4,13 +4,27 @@ version = "0.1.0"
 edition = "2024"
 rust-version = "1.85"
 description = "Fast codec iteration tool for encoder development"
+exclude = [
+    "CLAUDE.md",
+    "CONTEXT-HANDOFF.md",
+    "FEEDBACK.md",
+    ".claude/",
+    ".superwork/",
+    ".zenbench/",
+    "copter-report/",
+    ".github/",
+    "Cross.toml",
+    "justfile",
+    "Cargo.toml.original.txt",
+    "fuzz/",
+]
 
 [[bin]]
 name = "codec-iter"
 path = "src/main.rs"
 
 [dependencies]
-fast-ssim2 = { workspace = true }
+fast-ssim2 = { workspace = true , path = "../../../zen/fast-ssim2/fast-ssim2" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -19,20 +33,20 @@ imgref = { workspace = true }
 rgb = { workspace = true }
 anyhow = "1"
 png = "0.18"
-zenbitmaps = { path = "../../../zenbitmaps", features = ["imgref"] }
+zenbitmaps = { features = ["imgref"] , version = "0.1.3" , git = "https://github.com/imazen/zenbitmaps" }
 
 # JPEG support (optional — depends on zencodecs which needs updated zencodec-types traits)
-zencodecs = { path = "../../../zencodecs", features = ["jpeg"], optional = true }
-zenjpeg = { path = "../../../zenjpeg/zenjpeg", optional = true }
+zencodecs = { features = ["jpeg"], optional = true , version = "0.1.0" , git = "https://github.com/imazen/zencodecs" }
+zenjpeg = { optional = true , version = "0.8.2" , git = "https://github.com/imazen/zenjpeg" }
 
 # AVIF support (optional)
-ravif = { path = "../../../ravif/ravif", package = "zenravif", default-features = false, features = ["threading"], optional = true }
-zenavif = { path = "../../../zenavif", optional = true }
+ravif = { path = "../../../ravif/ravif", package = "zenravif", default-features = false, features = ["threading"], optional = true , version = "0.1.1" }
+zenavif = { optional = true , version = "0.1.3" , git = "https://github.com/imazen/zenavif" }
 
 # GPU-accelerated SSIM2 (optional, requires CUDA)
-ssimulacra2-cuda = { path = "../../../turbo-metrics/crates/ssimulacra2-cuda", optional = true }
-cudarse-driver = { path = "../../../turbo-metrics/crates/cudarse/cudarse-driver", optional = true }
-cudarse-npp = { path = "../../../turbo-metrics/crates/cudarse/cudarse-npp", features = ["isu"], optional = true }
+ssimulacra2-cuda = { optional = true , git = "https://github.com/imazen/ssimulacra2-cuda" }
+cudarse-driver = { optional = true , git = "https://github.com/imazen/cudarse-driver" }
+cudarse-npp = { features = ["isu"], optional = true , git = "https://github.com/imazen/cudarse-npp" }
 
 [features]
 default = ["avif-imazen"]

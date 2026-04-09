@@ -6,6 +6,20 @@ license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
 description = "CLI for codec-eval image codec comparison"
+exclude = [
+    "CLAUDE.md",
+    "CONTEXT-HANDOFF.md",
+    "FEEDBACK.md",
+    ".claude/",
+    ".superwork/",
+    ".zenbench/",
+    "copter-report/",
+    ".github/",
+    "Cross.toml",
+    "justfile",
+    "Cargo.toml.original.txt",
+    "fuzz/",
+]
 
 [[bin]]
 name = "codec-eval"
@@ -13,6 +27,7 @@ path = "src/main.rs"
 
 [dependencies]
 codec-eval.workspace = true
+codec-eval.path = "../.."
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
