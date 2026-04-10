@@ -27,7 +27,6 @@ path = "src/main.rs"
 
 [dependencies]
 codec-eval.workspace = true
-codec-eval.path = "../.."
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
@@ -49,3 +48,6 @@ uninlined_format_args = "allow"
 too_many_lines = "allow"
 cast_precision_loss = "allow"
 stable_sort_primitive = "allow"
+collapsible_if = "allow"
+needless_pass_by_value = "allow"
+manual_string_new = "allow"

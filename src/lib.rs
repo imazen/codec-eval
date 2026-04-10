@@ -35,7 +35,7 @@
 //! - [`corpus`]: Test corpus management
 //! - [`import`]: CSV import for third-party results
 //! - [`stats`]: Statistical analysis and Pareto front
-//! - [`interpolation`]: Quality interpolation and polynomial fitting
+//! - `interpolation`: Quality interpolation and polynomial fitting (requires `interpolation` feature)
 
 pub mod corpus;
 #[cfg(feature = "jpeg-decode")]

@@ -93,7 +93,7 @@ impl ImageData {
     /// Convert to RGB8 slice representation.
     ///
     /// Note: This does NOT apply ICC profile transformation. For ICC-aware
-    /// conversion, use [`to_rgb8_srgb()`] instead.
+    /// conversion, use [`ImageData::to_rgb8_srgb()`] instead.
     #[must_use]
     pub fn to_rgb8_vec(&self) -> Vec<u8> {
         match self {
@@ -138,7 +138,7 @@ impl ImageData {
 
     /// Convert to sRGB RGB8 slice, applying ICC profile transformation if needed.
     ///
-    /// This is the ICC-aware version of [`to_rgb8_vec()`]. Use this when you need
+    /// This is the ICC-aware version of [`ImageData::to_rgb8_vec()`]. Use this when you need
     /// the pixels in sRGB color space for metric calculation.
     pub fn to_rgb8_srgb(&self) -> crate::error::Result<Vec<u8>> {
         let rgb = self.to_rgb8_vec();

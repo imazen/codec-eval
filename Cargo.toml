@@ -4,14 +4,14 @@ exclude = ["crates/codec-compare", "crates/codec-iter"]
 resolver = "2"
 
 [workspace.package]
-version = "0.3.1"
+version = "0.3.2"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/imazen/codec-eval"
 rust-version = "1.89"
 
 [workspace.dependencies]
-codec-eval = { path = "." , version = "0.3.1" }
+codec-eval = { path = "." , version = "0.3.2" }
 thiserror = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

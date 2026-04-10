@@ -94,10 +94,10 @@ jobs:
       - name: Check WASM build
         env:
           RUSTFLAGS: "-C target-feature=+simd128"
-        run: cargo check --target wasm32-unknown-unknown --lib
-        # Note: rayon is a hard non-optional dependency, so wasm build/test
-        # is not currently possible. This job exists to track progress on
-        # making codec-eval wasm-compatible.
+        run: cargo check --target wasm32-unknown-unknown --lib --no-default-features
+        # Note: default features include codec-corpus (which depends on fd-lock,
+        # not available on WASM) and rayon. Build without defaults to verify
+        # the core library compiles for WASM.
 
   docs:
     name: Documentation
