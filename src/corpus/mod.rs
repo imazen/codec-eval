@@ -293,9 +293,9 @@ impl Corpus {
         // Not found
         #[cfg(feature = "corpus")]
         {
-            Err(crate::Error::Corpus(format!(
-                "Corpus not found at any common location. Use Corpus::get_dataset(\"kodak\") to download automatically."
-            )))
+            Err(crate::Error::Corpus(
+                "Corpus not found at any common location. Use Corpus::get_dataset(\"kodak\") to download automatically.".to_string()
+            ))
         }
 
         #[cfg(not(feature = "corpus"))]
