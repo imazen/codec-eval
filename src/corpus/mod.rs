@@ -135,8 +135,7 @@ impl Corpus {
 
     /// Default corpus repository URL (used when corpus feature is disabled).
     #[cfg(not(feature = "corpus"))]
-    pub const DEFAULT_CORPUS_URL: &'static str =
-        "https://github.com/imazen/codec-corpus.git";
+    pub const DEFAULT_CORPUS_URL: &'static str = "https://github.com/imazen/codec-corpus.git";
 
     /// Get corpus dataset, downloading if necessary.
     ///

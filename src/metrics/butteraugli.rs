@@ -70,13 +70,12 @@ pub fn calculate_butteraugli(
     let img1 = Img::new(rgb_bytes_to_pixels(reference), width, height);
     let img2 = Img::new(rgb_bytes_to_pixels(test), width, height);
     let params = ButteraugliParams::default();
-    let result =
-        butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
-            Error::MetricCalculation {
-                metric: "Butteraugli".to_string(),
-                reason: e.to_string(),
-            }
-        })?;
+    let result = butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
+        Error::MetricCalculation {
+            metric: "Butteraugli".to_string(),
+            reason: e.to_string(),
+        }
+    })?;
 
     Ok(result.score)
 }
@@ -126,13 +125,12 @@ pub fn calculate_butteraugli_with_intensity(
     let img1 = Img::new(rgb_bytes_to_pixels(reference), width, height);
     let img2 = Img::new(rgb_bytes_to_pixels(test), width, height);
     let params = ButteraugliParams::default().with_intensity_target(intensity_target);
-    let result =
-        butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
-            Error::MetricCalculation {
-                metric: "Butteraugli".to_string(),
-                reason: e.to_string(),
-            }
-        })?;
+    let result = butteraugli_compare(img1.as_ref(), img2.as_ref(), &params).map_err(|e| {
+        Error::MetricCalculation {
+            metric: "Butteraugli".to_string(),
+            reason: e.to_string(),
+        }
+    })?;
 
     Ok(result.score)
 }

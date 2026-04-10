@@ -53,15 +53,22 @@ pub mod viewing;
 pub use corpus::{Corpus, CorpusImage, ImageCategory};
 pub use error::{Error, Result};
 pub use eval::{
-    // Evaluation helpers (lightweight API for zen* projects)
-    assert_perception_level, assert_quality, evaluate_single,
     // Session-based evaluation (full API)
-    CodecResult, CorpusReport, EvalConfig, EvalSession, ImageReport, ImageData,
+    CodecResult,
+    CorpusReport,
+    EvalConfig,
+    EvalSession,
+    ImageData,
+    ImageReport,
+    // Evaluation helpers (lightweight API for zen* projects)
+    assert_perception_level,
+    assert_quality,
+    evaluate_single,
 };
 pub use import::{CsvImporter, ExternalResult};
 pub use metrics::{MetricConfig, MetricResult, PerceptionLevel};
 pub use stats::{ParetoFront, RDPoint, Summary};
-pub use viewing::{ViewingCondition, REFERENCE_PPD};
+pub use viewing::{REFERENCE_PPD, ViewingCondition};
 
 // Advanced/specialized re-exports (less commonly used)
 
@@ -90,11 +97,11 @@ pub use viewing::{SimulationMode, SimulationParams};
 
 /// Chart generation types (requires `chart` feature).
 #[cfg(feature = "chart")]
-pub use stats::{generate_svg, ChartConfig, ChartPoint, ChartSeries};
+pub use stats::{ChartConfig, ChartPoint, ChartSeries, generate_svg};
 
 /// Polynomial interpolation for quality curves (requires `interpolation` feature).
 #[cfg(feature = "interpolation")]
 pub use interpolation::{
-    compute_gap_polynomials, fit_gap_polynomial, fit_power_law, linear_interpolate,
-    GapPolynomial, InterpolationConfig, InterpolationTable,
+    GapPolynomial, InterpolationConfig, InterpolationTable, compute_gap_polynomials,
+    fit_gap_polynomial, fit_power_law, linear_interpolate,
 };

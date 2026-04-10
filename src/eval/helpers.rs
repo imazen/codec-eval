@@ -33,7 +33,7 @@
 
 use crate::error::{Error, Result};
 use crate::metrics::{
-    self, butteraugli, dssim, ssimulacra2, MetricConfig, MetricResult, PerceptionLevel,
+    self, MetricConfig, MetricResult, PerceptionLevel, butteraugli, dssim, ssimulacra2,
 };
 use crate::viewing::ViewingCondition;
 use imgref::ImgVec;
@@ -121,10 +121,7 @@ pub fn evaluate_single(
     // Apply XYB roundtrip to reference if requested
     let reference_img: ImgVec<RGB8>;
     let reference_final = if config.xyb_roundtrip {
-        let ref_bytes: Vec<u8> = reference
-            .pixels()
-            .flat_map(|p| [p.r, p.g, p.b])
-            .collect();
+        let ref_bytes: Vec<u8> = reference.pixels().flat_map(|p| [p.r, p.g, p.b]).collect();
         let roundtripped = metrics::xyb_roundtrip(&ref_bytes, width, height);
         let pixels: Vec<RGB8> = roundtripped
             .chunks_exact(3)
@@ -156,13 +153,15 @@ pub fn evaluate_single(
         let enc_buf: Vec<u8> = encoded.pixels().flat_map(|p| [p.r, p.g, p.b]).collect();
 
         if config.ssimulacra2 {
-            result.ssimulacra2 =
-                Some(ssimulacra2::calculate_ssimulacra2(&ref_buf, &enc_buf, width, height)?);
+            result.ssimulacra2 = Some(ssimulacra2::calculate_ssimulacra2(
+                &ref_buf, &enc_buf, width, height,
+            )?);
         }
 
         if config.butteraugli {
-            result.butteraugli =
-                Some(butteraugli::calculate_butteraugli(&ref_buf, &enc_buf, width, height)?);
+            result.butteraugli = Some(butteraugli::calculate_butteraugli(
+                &ref_buf, &enc_buf, width, height,
+            )?);
         }
 
         if config.psnr {

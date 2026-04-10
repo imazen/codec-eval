@@ -739,8 +739,7 @@ fn find_knee(
 
     let (seg_idx, _) = slopes[crossing_idx];
     let bpp = (curve[seg_idx].0 + curve[seg_idx + 1].0) / 2.0;
-    let quality =
-        (extract_quality(&curve[seg_idx]) + extract_quality(&curve[seg_idx + 1])) / 2.0;
+    let quality = (extract_quality(&curve[seg_idx]) + extract_quality(&curve[seg_idx + 1])) / 2.0;
 
     Some(RDKnee {
         bpp,
@@ -759,11 +758,7 @@ fn find_knee(
 /// Plots (bpp, s2) with angle reference lines radiating from the worst corner,
 /// and marks the knee positions.
 #[must_use]
-pub fn plot_rd_svg(
-    curve: &[(f64, f64, f64)],
-    calibration: &RDCalibration,
-    title: &str,
-) -> String {
+pub fn plot_rd_svg(curve: &[(f64, f64, f64)], calibration: &RDCalibration, title: &str) -> String {
     let frame = &calibration.frame;
     let margin = 60.0_f64;
     let plot_w = 600.0_f64;
@@ -830,8 +825,10 @@ pub fn plot_rd_svg(
         let _ = write!(
             svg,
             r##"<line x1="{}" y1="{}" x2="{}" y2="{}" stroke="{color}" stroke-width="1" stroke-dasharray="4,4" opacity="{opacity}"/>"##,
-            cx, cy,
-            x_of(bpp_far), y_of(s2_far)
+            cx,
+            cy,
+            x_of(bpp_far),
+            y_of(s2_far)
         );
 
         // Angle label near the corner
@@ -907,7 +904,11 @@ pub fn plot_rd_svg(
     let _ = write!(
         svg,
         r##"<text x="{:.0}" y="{:.0}" fill="#ffd700" font-size="10">s2 knee {:.1}° ({:.2} bpp, s2={:.1})</text>"##,
-        kx + 12.0, ky - 4.0, s2_knee.fixed_angle, s2_knee.bpp, s2_knee.quality
+        kx + 12.0,
+        ky - 4.0,
+        s2_knee.fixed_angle,
+        s2_knee.bpp,
+        s2_knee.quality
     );
 
     let ba_knee = &calibration.butteraugli;
@@ -922,7 +923,11 @@ pub fn plot_rd_svg(
     let _ = write!(
         svg,
         r##"<text x="{:.0}" y="{:.0}" fill="#3498db" font-size="10">ba knee {:.1}° ({:.2} bpp, ba={:.2})</text>"##,
-        bkx + 12.0, bky + 14.0, ba_knee.fixed_angle, ba_knee.bpp, ba_knee.quality
+        bkx + 12.0,
+        bky + 14.0,
+        ba_knee.fixed_angle,
+        ba_knee.bpp,
+        ba_knee.quality
     );
 
     // Disagreement range shading
@@ -966,7 +971,8 @@ pub fn plot_rd_svg(
     let _ = write!(
         svg,
         r##"<text x="{:.0}" y="{:.0}" fill="#ff6b6b" font-size="9" text-anchor="end">origin</text>"##,
-        cx - 8.0, cy + 4.0
+        cx - 8.0,
+        cy + 4.0
     );
 
     svg.push_str("</svg>");
@@ -1085,9 +1091,8 @@ pub mod defaults {
 #[cfg(test)]
 mod tests {
     use super::{
-        defaults, AngleBin, AxisRange, BinScheme, CodecConfig, ConfiguredParetoFront,
-        ConfiguredRDPoint, CorpusAggregate, FixedFrame, NormalizationContext, ParamValue,
-        QualityDirection,
+        AngleBin, AxisRange, BinScheme, CodecConfig, ConfiguredParetoFront, ConfiguredRDPoint,
+        CorpusAggregate, FixedFrame, NormalizationContext, ParamValue, QualityDirection, defaults,
     };
 
     fn make_test_curve() -> Vec<(f64, f64, f64)> {
@@ -1192,14 +1197,24 @@ mod tests {
             image_count: 1,
         };
 
-        let knee = agg.ssimulacra2_knee(&FixedFrame::WEB).expect("should find knee");
+        let knee = agg
+            .ssimulacra2_knee(&FixedFrame::WEB)
+            .expect("should find knee");
         assert!(knee.bpp > 0.2, "knee bpp too low: {}", knee.bpp);
         assert!(knee.bpp < 2.0, "knee bpp too high: {}", knee.bpp);
         assert!(knee.quality > 40.0, "knee s2 too low: {}", knee.quality);
         assert!(knee.quality < 90.0, "knee s2 too high: {}", knee.quality);
         // Fixed-frame angle should be in a reasonable range
-        assert!(knee.fixed_angle > 20.0, "angle too low: {}", knee.fixed_angle);
-        assert!(knee.fixed_angle < 70.0, "angle too high: {}", knee.fixed_angle);
+        assert!(
+            knee.fixed_angle > 20.0,
+            "angle too low: {}",
+            knee.fixed_angle
+        );
+        assert!(
+            knee.fixed_angle < 70.0,
+            "angle too high: {}",
+            knee.fixed_angle
+        );
     }
 
     #[test]
@@ -1212,7 +1227,9 @@ mod tests {
             image_count: 1,
         };
 
-        let knee = agg.butteraugli_knee(&FixedFrame::WEB).expect("should find knee");
+        let knee = agg
+            .butteraugli_knee(&FixedFrame::WEB)
+            .expect("should find knee");
         assert!(knee.bpp > 0.2);
         assert!(knee.bpp < 2.0);
         assert!(knee.fixed_angle > 20.0);
@@ -1255,7 +1272,9 @@ mod tests {
         assert!(
             diff < 10.0,
             "knee angle difference {:.1}° too large (s2={:.1}°, ba={:.1}°)",
-            diff, cal.ssimulacra2.fixed_angle, cal.butteraugli.fixed_angle
+            diff,
+            cal.ssimulacra2.fixed_angle,
+            cal.butteraugli.fixed_angle
         );
     }
 
@@ -1295,32 +1314,28 @@ mod tests {
         let points: Vec<ConfiguredRDPoint> = vec![
             ConfiguredRDPoint {
                 position: cal.position(0.3, 50.0, 4.0),
-                config: CodecConfig::new("test", "1.0")
-                    .with_param("q", ParamValue::Int(30)),
+                config: CodecConfig::new("test", "1.0").with_param("q", ParamValue::Int(30)),
                 image: None,
                 encode_time_ms: None,
                 decode_time_ms: None,
             },
             ConfiguredRDPoint {
                 position: cal.position(0.5, 65.0, 2.5),
-                config: CodecConfig::new("test", "1.0")
-                    .with_param("q", ParamValue::Int(50)),
+                config: CodecConfig::new("test", "1.0").with_param("q", ParamValue::Int(50)),
                 image: None,
                 encode_time_ms: None,
                 decode_time_ms: None,
             },
             ConfiguredRDPoint {
                 position: cal.position(1.0, 80.0, 1.0),
-                config: CodecConfig::new("test", "1.0")
-                    .with_param("q", ParamValue::Int(80)),
+                config: CodecConfig::new("test", "1.0").with_param("q", ParamValue::Int(80)),
                 image: None,
                 encode_time_ms: None,
                 decode_time_ms: None,
             },
             ConfiguredRDPoint {
                 position: cal.position(0.6, 60.0, 3.0),
-                config: CodecConfig::new("test", "1.0")
-                    .with_param("q", ParamValue::Int(45)),
+                config: CodecConfig::new("test", "1.0").with_param("q", ParamValue::Int(45)),
                 image: None,
                 encode_time_ms: None,
                 decode_time_ms: None,
@@ -1335,8 +1350,16 @@ mod tests {
 
         // All angles should be positive for these well-behaved test points
         for p in &front.points {
-            assert!(p.position.theta_s2 > 0.0, "s2 angle: {}", p.position.theta_s2);
-            assert!(p.position.theta_ba > 0.0, "ba angle: {}", p.position.theta_ba);
+            assert!(
+                p.position.theta_s2 > 0.0,
+                "s2 angle: {}",
+                p.position.theta_s2
+            );
+            assert!(
+                p.position.theta_ba > 0.0,
+                "ba angle: {}",
+                p.position.theta_ba
+            );
         }
 
         let best = front.best_config_for_s2(70.0).unwrap();

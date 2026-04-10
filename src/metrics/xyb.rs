@@ -31,9 +31,15 @@
 
 // XYB conversion constants (from butteraugli 0.4.0)
 const XYB_OPSIN_ABSORBANCE_MATRIX: [f32; 9] = [
-    0.30, 0.622, 0.078, // Row 0
-    0.23, 0.692, 0.078, // Row 1
-    0.243_422_69, 0.204_767_44, 0.551_809_87, // Row 2
+    0.30,
+    0.622,
+    0.078, // Row 0
+    0.23,
+    0.692,
+    0.078, // Row 1
+    0.243_422_69,
+    0.204_767_44,
+    0.551_809_87, // Row 2
 ];
 
 const XYB_OPSIN_ABSORBANCE_BIAS: [f32; 3] = [0.003_793_073_3, 0.003_793_073_3, 0.003_793_073_3];
@@ -45,9 +51,8 @@ const XYB_NEG_OPSIN_ABSORBANCE_BIAS_CBRT: [f32; 3] = [
 ];
 
 const INV_OPSIN_MATRIX: [f32; 9] = [
-    11.031_567, -9.866_944, -0.164_623,
-    -3.254_147, 4.418_77, -0.164_623,
-    -3.658_851, 2.712_923, 1.945_928,
+    11.031_567, -9.866_944, -0.164_623, -3.254_147, 4.418_77, -0.164_623, -3.658_851, 2.712_923,
+    1.945_928,
 ];
 
 /// sRGB gamma decoding (sRGB to linear RGB).
@@ -85,21 +90,13 @@ fn linear_to_srgb_u8(v: f32) -> u8 {
 /// Mixed cube root transfer function.
 #[inline]
 fn mixed_cbrt(v: f32) -> f32 {
-    if v < 0.0 {
-        -((-v).cbrt())
-    } else {
-        v.cbrt()
-    }
+    if v < 0.0 { -((-v).cbrt()) } else { v.cbrt() }
 }
 
 /// Inverse of mixed cube root.
 #[inline]
 fn mixed_cube(v: f32) -> f32 {
-    if v < 0.0 {
-        -((-v).powi(3))
-    } else {
-        v.powi(3)
-    }
+    if v < 0.0 { -((-v).powi(3)) } else { v.powi(3) }
 }
 
 /// Convert linear RGB to XYB color space.

@@ -87,20 +87,15 @@ pub fn calculate_ssimulacra2(
         .map(|c| [c[0], c[1], c[2]])
         .collect();
 
-    let test_pixels: Vec<[u8; 3]> = test
-        .chunks_exact(3)
-        .map(|c| [c[0], c[1], c[2]])
-        .collect();
+    let test_pixels: Vec<[u8; 3]> = test.chunks_exact(3).map(|c| [c[0], c[1], c[2]]).collect();
 
     let ref_img = ImgVec::new(ref_pixels, width, height);
     let test_img = ImgVec::new(test_pixels, width, height);
 
     // fast-ssim2 uses ImgRef, so convert ImgVec to ImgRef
-    compute_ssimulacra2(ref_img.as_ref(), test_img.as_ref()).map_err(|e| {
-        Error::MetricCalculation {
-            metric: "SSIMULACRA2".to_string(),
-            reason: format!("Failed to compute SSIMULACRA2: {e:?}"),
-        }
+    compute_ssimulacra2(ref_img.as_ref(), test_img.as_ref()).map_err(|e| Error::MetricCalculation {
+        metric: "SSIMULACRA2".to_string(),
+        reason: format!("Failed to compute SSIMULACRA2: {e:?}"),
     })
 }
 
