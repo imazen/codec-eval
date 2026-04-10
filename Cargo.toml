@@ -19,7 +19,7 @@ csv = "1.3"
 imgref = "1.10"
 rgb = "0.8"
 dssim-core = "3.4"
-fast-ssim2 = { version = "0.7.2", features = ["imgref"] }
+fast-ssim2 = { version = "0.8.0", features = ["imgref"] }
 butteraugli = "0.9.0"
 rayon = "1.10"
 chrono = { version = "0.4", features = ["serde"] }
