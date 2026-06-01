@@ -53,6 +53,13 @@ exclude = [
     "justfile",
     "Cargo.toml.original.txt",
     "fuzz/",
+    ".gitignore",
+    "CONTRIBUTING.md",
+    "INTEGRATION.md",
+    "baselines/",
+    "plans/",
+    "scripts/",
+    "corpus/sharpened-800px/",
 ]
 
 [features]

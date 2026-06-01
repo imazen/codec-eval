@@ -47,3 +47,6 @@ Cargo.toml.original.txt
 perf.data
 perf.data.old
 fuzz-*.log
+
+.workongoing
+.jj/
