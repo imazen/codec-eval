@@ -119,7 +119,7 @@ fn info(path: &PathBuf, _verbose: bool) -> Result<()> {
     if !formats.is_empty() {
         println!("  Formats:");
         let mut sorted: Vec<_> = formats.into_iter().collect();
-        sorted.sort_by(|a, b| b.1.cmp(&a.1));
+        sorted.sort_by_key(|entry| std::cmp::Reverse(entry.1));
         for (format, count) in sorted {
             println!("    {}: {}", format, count);
         }

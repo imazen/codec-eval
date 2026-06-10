@@ -40,7 +40,7 @@ pub fn run(
 
     println!("Codecs:");
     let mut sorted: Vec<_> = by_codec.into_iter().collect();
-    sorted.sort_by(|a, b| b.1.cmp(&a.1));
+    sorted.sort_by_key(|entry| std::cmp::Reverse(entry.1));
     for (codec, count) in sorted {
         println!("  {}: {}", codec, count);
     }
