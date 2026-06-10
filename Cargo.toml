@@ -60,6 +60,8 @@ exclude = [
     "plans/",
     "scripts/",
     "corpus/sharpened-800px/",
+    "docs/",
+    "tests/public_api_doc.rs",
 ]
 
 [features]

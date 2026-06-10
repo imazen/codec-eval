@@ -7,6 +7,19 @@ corpus := "~/work/codec-corpus/CID22/CID22-512/training"
 cuda_path := "/usr/local/cuda-12.6"
 cuda_lib_path := "/usr/local/cuda-12.6/lib64:/usr/local/cuda-12.6/lib64/stubs:/usr/lib/wsl/lib"
 
+# Format + regenerate public-API snapshots
+fmt:
+    cargo fmt --all
+    cargo test -p codec-eval --test public_api_doc
+
+# Regenerate the public-API surface snapshot only
+api-doc:
+    cargo test -p codec-eval --test public_api_doc
+
+# Verify the committed snapshot is current (what CI runs)
+api-doc-check:
+    ZEN_API_DOC=check cargo test -p codec-eval --test public_api_doc
+
 # Quick eval (zenjpeg default config, tiny tier, quick quality)
 eval format="jpeg" limit="3":
     cargo run --release -p codec-iter -- eval --format {{format}} --limit {{limit}} --corpus {{corpus}}
