@@ -1,0 +1,148 @@
+# codec-eval public API — additions from non-default features
+# features: chart,corpus,icc,interpolation,jpeg-decode,jpeg-decoder,moxcms
+# (regenerated on every `cargo test` by zenutils-apidoc; ZEN_API_DOC=check verifies, =off skips).
+# Encodings: crate-name prefix stripped; auto traits collapse to a
+# count + exceptions; trait impls collapse to one roster line per
+# type (method signatures live at the trait definition); blanket
+# impls omitted; re-export duplicates annotated `[also: path]`.
+# DO NOT EDIT BY HAND — commit regenerated changes with the code.
+
+## summary
+#
+#   pub modules                                 3
+#   pub types (struct/enum/trait/alias)        15
+#   pub consts/statics                          5
+#   free functions                             11
+#   inherent methods                           25
+#   struct fields                              64
+#   trait roster entries (type × trait)        21
+#   auto-trait-complete types                   6
+#
+# per-module pub lines:
+#   (root)                           38
+#   interpolation                    31
+#   stats                            54
+
+## items (108 lines)
+
+pub mod interpolation
+pub interpolation::GapPolynomial::a: f64
+pub interpolation::GapPolynomial::b: f64
+pub interpolation::GapPolynomial::c: f64
+pub interpolation::GapPolynomial::q_high: u32
+pub interpolation::GapPolynomial::q_low: u32
+pub interpolation::GapPolynomial::r_squared: f64
+pub interpolation::GapPolynomial::validation_error: f64
+pub fn interpolation::GapPolynomial::covers(&self, u32) -> bool
+pub fn interpolation::GapPolynomial::interpolate(&self, f64) -> f64
+pub interpolation::InterpolationConfig::exponent_step: f64
+pub interpolation::InterpolationConfig::max_exponent: f64
+pub interpolation::InterpolationConfig::min_exponent: f64
+pub interpolation::InterpolationConfig::min_r_squared: f64
+pub interpolation::InterpolationTable::codec: alloc::string::String
+pub interpolation::InterpolationTable::condition: alloc::string::String
+pub interpolation::InterpolationTable::polynomials: alloc::vec::Vec<interpolation::GapPolynomial>
+pub fn interpolation::InterpolationTable::find_polynomial(&self, u32) -> core::option::Option<&interpolation::GapPolynomial>
+pub fn interpolation::InterpolationTable::interpolate(&self, f64) -> f64
+pub fn interpolation::InterpolationTable::new(impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+pub mod stats::chart
+pub mod stats::chart::colors
+pub const stats::chart::colors::BLUE: &str
+pub const stats::chart::colors::GREEN: &str
+pub const stats::chart::colors::ORANGE: &str
+pub const stats::chart::colors::PURPLE: &str
+pub const stats::chart::colors::RED: &str
+pub stats::chart::ChartConfig::height: u32
+pub stats::chart::ChartConfig::lower_is_better: bool
+pub stats::chart::ChartConfig::title: alloc::string::String
+pub stats::chart::ChartConfig::width: u32
+pub stats::chart::ChartConfig::x_label: alloc::string::String
+pub stats::chart::ChartConfig::y_label: alloc::string::String
+pub fn stats::chart::ChartConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_dimensions(self, u32, u32) -> Self
+pub fn stats::chart::ChartConfig::with_lower_is_better(self, bool) -> Self
+pub fn stats::chart::ChartConfig::with_x_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_y_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub stats::chart::ChartPoint::label: core::option::Option<alloc::string::String>
+pub stats::chart::ChartPoint::x: f64
+pub stats::chart::ChartPoint::y: f64
+pub stats::chart::ChartSeries::color: alloc::string::String
+pub stats::chart::ChartSeries::name: alloc::string::String
+pub stats::chart::ChartSeries::points: alloc::vec::Vec<stats::chart::ChartPoint>
+pub stats::ChartConfig::height: u32
+pub stats::ChartConfig::lower_is_better: bool
+pub stats::ChartConfig::title: alloc::string::String
+pub stats::ChartConfig::width: u32
+pub stats::ChartConfig::x_label: alloc::string::String
+pub stats::ChartConfig::y_label: alloc::string::String
+pub fn stats::chart::ChartConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_dimensions(self, u32, u32) -> Self
+pub fn stats::chart::ChartConfig::with_lower_is_better(self, bool) -> Self
+pub fn stats::chart::ChartConfig::with_x_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_y_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub stats::ChartPoint::label: core::option::Option<alloc::string::String>
+pub stats::ChartPoint::x: f64
+pub stats::ChartPoint::y: f64
+pub stats::ChartSeries::color: alloc::string::String
+pub stats::ChartSeries::name: alloc::string::String
+pub stats::ChartSeries::points: alloc::vec::Vec<stats::chart::ChartPoint>
+pub struct ChartConfig [also: stats, stats::chart]
+pub ChartConfig::height: u32
+pub ChartConfig::lower_is_better: bool
+pub ChartConfig::title: alloc::string::String
+pub ChartConfig::width: u32
+pub ChartConfig::x_label: alloc::string::String
+pub ChartConfig::y_label: alloc::string::String
+pub fn stats::chart::ChartConfig::new(impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_dimensions(self, u32, u32) -> Self
+pub fn stats::chart::ChartConfig::with_lower_is_better(self, bool) -> Self
+pub fn stats::chart::ChartConfig::with_x_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn stats::chart::ChartConfig::with_y_label(self, impl core::convert::Into<alloc::string::String>) -> Self
+pub struct ChartPoint [also: stats, stats::chart]
+pub ChartPoint::label: core::option::Option<alloc::string::String>
+pub ChartPoint::x: f64
+pub ChartPoint::y: f64
+pub struct ChartSeries [also: stats, stats::chart]
+pub ChartSeries::color: alloc::string::String
+pub ChartSeries::name: alloc::string::String
+pub ChartSeries::points: alloc::vec::Vec<stats::chart::ChartPoint>
+pub struct GapPolynomial [also: interpolation]
+pub GapPolynomial::a: f64
+pub GapPolynomial::b: f64
+pub GapPolynomial::c: f64
+pub GapPolynomial::q_high: u32
+pub GapPolynomial::q_low: u32
+pub GapPolynomial::r_squared: f64
+pub GapPolynomial::validation_error: f64
+pub fn interpolation::GapPolynomial::covers(&self, u32) -> bool
+pub fn interpolation::GapPolynomial::interpolate(&self, f64) -> f64
+pub struct InterpolationConfig [also: interpolation]
+pub InterpolationConfig::exponent_step: f64
+pub InterpolationConfig::max_exponent: f64
+pub InterpolationConfig::min_exponent: f64
+pub InterpolationConfig::min_r_squared: f64
+pub struct InterpolationTable [also: interpolation]
+pub InterpolationTable::codec: alloc::string::String
+pub InterpolationTable::condition: alloc::string::String
+pub InterpolationTable::polynomials: alloc::vec::Vec<interpolation::GapPolynomial>
+pub fn interpolation::InterpolationTable::find_polynomial(&self, u32) -> core::option::Option<&interpolation::GapPolynomial>
+pub fn interpolation::InterpolationTable::interpolate(&self, f64) -> f64
+pub fn interpolation::InterpolationTable::new(impl core::convert::Into<alloc::string::String>, impl core::convert::Into<alloc::string::String>) -> Self
+pub fn compute_gap_polynomials(&[(u32, f64)], &interpolation::InterpolationConfig) -> alloc::vec::Vec<interpolation::GapPolynomial> [also: interpolation]
+pub fn fit_gap_polynomial(&[(u32, f64)], usize, &interpolation::InterpolationConfig) -> core::option::Option<interpolation::GapPolynomial> [also: interpolation]
+pub fn fit_power_law(&[(f64, f64)], &interpolation::InterpolationConfig) -> core::option::Option<(f64, f64, f64, f64)> [also: interpolation]
+pub fn generate_svg(&[stats::chart::ChartSeries], &stats::chart::ChartConfig) -> alloc::string::String [also: stats, stats::chart]
+pub fn linear_interpolate(f64, &[(u32, f64)]) -> core::option::Option<f64> [also: interpolation]
+
+## trait impls (6 types)
+
+interpolation::GapPolynomial: Clone, Copy, Debug, serde_core::de::Deserialize<'de>, serde_core::ser::Serialize
+interpolation::InterpolationConfig: Clone, Debug, Default, serde_core::de::Deserialize<'de>, serde_core::ser::Serialize
+interpolation::InterpolationTable: Clone, Debug, serde_core::de::Deserialize<'de>, serde_core::ser::Serialize
+stats::chart::ChartConfig: Clone, Debug, Default
+stats::chart::ChartPoint: Clone, Debug
+stats::chart::ChartSeries: Clone, Debug
+
+## auto traits
+
+6 types implement all of: Freeze, RefUnwindSafe, Send, Sync, Unpin, UnwindSafe

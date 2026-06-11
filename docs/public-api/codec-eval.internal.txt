@@ -1,0 +1,44 @@
+# codec-eval public API — doc(hidden) items and excluded-feature surface
+# excluded features: (none)
+# (regenerated on every `cargo test` by zenutils-apidoc; ZEN_API_DOC=check verifies, =off skips).
+# Encodings: crate-name prefix stripped; auto traits collapse to a
+# count + exceptions; trait impls collapse to one roster line per
+# type (method signatures live at the trait definition); blanket
+# impls omitted; re-export duplicates annotated `[also: path]`.
+# DO NOT EDIT BY HAND — commit regenerated changes with the code.
+
+## summary
+#
+#   inherent methods                            4
+#   re-exports                                  1
+#   trait roster entries (type × trait)        13
+#
+# per-module pub lines:
+#   (root)                            1
+#   metrics                           2
+#   stats                             1
+#   viewing                           1
+
+## items (5 lines)
+
+pub fn ImageCategory::assert_fields_are_eq(&self)
+pub fn metrics::PerceptionLevel::assert_fields_are_eq(&self)
+pub fn stats::rd_knee::QualityDirection::assert_fields_are_eq(&self)
+pub fn viewing::SimulationMode::assert_fields_are_eq(&self)
+pub use metrics::prelude::SsimMap
+
+## trait impls (13 types)
+
+ImageCategory: TrivialClone
+interpolation::GapPolynomial: TrivialClone
+metrics::PerceptionLevel: TrivialClone
+stats::rd_knee::AngleBin: TrivialClone
+stats::rd_knee::AxisRange: TrivialClone
+stats::rd_knee::DualAngleBin: TrivialClone
+stats::rd_knee::FixedFrame: TrivialClone
+stats::rd_knee::NormalizationContext: TrivialClone
+stats::rd_knee::QualityDirection: TrivialClone
+stats::rd_knee::RDKnee: TrivialClone
+stats::rd_knee::RDPosition: TrivialClone
+viewing::SimulationMode: TrivialClone
+viewing::SimulationParams: TrivialClone

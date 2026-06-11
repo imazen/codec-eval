@@ -7,18 +7,20 @@ corpus := "~/work/codec-corpus/CID22/CID22-512/training"
 cuda_path := "/usr/local/cuda-12.6"
 cuda_lib_path := "/usr/local/cuda-12.6/lib64:/usr/local/cuda-12.6/lib64/stubs:/usr/lib/wsl/lib"
 
-# Format + regenerate public-API snapshots
+# Format + regenerate the public-API surface snapshots (docs/public-api/).
+# The snapshot runner lives in the workspace-excluded apidoc/ package, so
+# plain `cargo test` never compiles its dependency tree or runs rustdoc.
 fmt:
     cargo fmt --all
-    cargo test -p codec-eval --test public_api_doc
+    cargo test --manifest-path apidoc/Cargo.toml
 
-# Regenerate the public-API surface snapshot only
+# Regenerate the public-API surface snapshots only
 api-doc:
-    cargo test -p codec-eval --test public_api_doc
+    cargo test --manifest-path apidoc/Cargo.toml
 
-# Verify the committed snapshot is current (what CI runs)
+# Verify the committed snapshots are current
 api-doc-check:
-    ZEN_API_DOC=check cargo test -p codec-eval --test public_api_doc
+    ZEN_API_DOC=check cargo test --manifest-path apidoc/Cargo.toml
 
 # Quick eval (zenjpeg default config, tiny tier, quick quality)
 eval format="jpeg" limit="3":

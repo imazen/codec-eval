@@ -1,6 +1,9 @@
 [workspace]
 members = [".", "crates/codec-eval-cli"]
-exclude = ["crates/codec-compare", "crates/codec-iter"]
+# `apidoc/` is the CI-free public-API snapshot runner: excluded so plain
+# `cargo test` and every CI job never compile its dependency tree or run
+# rustdoc. Regenerate via `just api-doc`.
+exclude = ["crates/codec-compare", "crates/codec-iter", "apidoc"]
 resolver = "2"
 
 [workspace.package]
@@ -61,7 +64,6 @@ exclude = [
     "scripts/",
     "corpus/sharpened-800px/",
     "docs/",
-    "tests/public_api_doc.rs",
 ]
 
 [features]
