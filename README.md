@@ -16,10 +16,13 @@ A practical guide to comparing image codecs fairly, with metrics accuracy data, 
 **Want to improve this tool?** See **[CONTRIBUTING.md](CONTRIBUTING.md)**. We actively want input from codec developers—you know your domain better than we do.
 
 ```bash
-# Quick start
+# Quick start: the library is published on crates.io
+cargo add codec-eval
+
+# Track the latest unreleased changes from git instead
 cargo add codec-eval --git https://github.com/imazen/codec-eval
 
-# Or use the CLI
+# The companion CLI is git-only (not yet published)
 cargo install --git https://github.com/imazen/codec-eval codec-eval-cli
 ```
 
@@ -28,22 +31,53 @@ cargo install --git https://github.com/imazen/codec-eval codec-eval-cli
 **API-first design**: You provide encode/decode callbacks, the library handles everything else.
 
 ```rust
-use codec_eval::{EvalSession, EvalConfig, ViewingCondition};
+use codec_eval::{EvalSession, EvalConfig, ViewingCondition, ImageData, Result};
+use codec_eval::eval::session::EncodeRequest; // not re-exported at the crate root
 
 let config = EvalConfig::builder()
     .report_dir("./reports")
     .viewing(ViewingCondition::desktop())
+    // Encoder quality settings (0-100), swept per codec. NOT target metric
+    // scores — your callback maps `request.quality` onto your encoder's dial.
     .quality_levels(vec![60.0, 80.0, 95.0])
     .build();
 
 let mut session = EvalSession::new(config);
 
-session.add_codec("my-codec", "1.0", Box::new(|image, request| {
-    my_codec::encode(image, request.quality)
+// The encode callback is `Fn(&ImageData, &EncodeRequest) -> Result<Vec<u8>>`.
+// `ImageData` is an enum (RGB8/RGBA8 imgref or raw slice + dims); `request.quality`
+// is the f64 (0-100) drawn from `quality_levels`. Return the encoded bytes.
+session.add_codec("my-codec", "1.0", Box::new(|image: &ImageData, request: &EncodeRequest| -> Result<Vec<u8>> {
+    let rgb: Vec<u8> = image.to_rgb8_vec();           // tightly-packed RGB8
+    let (w, h) = (image.width(), image.height());
+    my_codec::encode(&rgb, w, h, request.quality)     // -> Result<Vec<u8>>
 }));
 
-let report = session.evaluate_corpus("./test_images")?;
+// Evaluate one decoded reference image across every registered codec and
+// quality level. Returns an `ImageReport` whose `.results` is a `Vec<CodecResult>`.
+let reference: ImageData = load_png_as_image_data("test.png")?;
+let report = session.evaluate_image("test.png", reference)?;
+
+// Read the results: each CodecResult carries the codec id, the quality used,
+// encoded size, and the metric scores (all `Option<f64>`).
+for r in &report.results {
+    println!(
+        "{} q{:>3}  {:>7} bytes  {:.3} bpp  ssimulacra2={:?}  dssim={:?}",
+        r.codec_id, r.quality, r.file_size, r.bits_per_pixel,
+        r.metrics.ssimulacra2, r.metrics.dssim,
+    );
+}
+
+// Persist JSON + CSV to the configured `report_dir`.
+session.write_image_report(&report)?;
 ```
+
+> Pass an *already-decoded* `ImageData` to `evaluate_image` — the harness does not
+> read files itself. For built-in research corpora, fetch one with
+> `codec_eval::corpus::Corpus::get_dataset("kodak")?` (downloaded and cached via
+> [codec-corpus](https://crates.io/crates/codec-corpus)) and decode each entry into
+> an `ImageData`. Always start from lossless sources — see
+> [Fair Comparison Principles](#fair-comparison-principles).
 
 **Features:**
 - DSSIM, Butteraugli, and SSIMULACRA2 metrics (PSNR for legacy comparisons)
